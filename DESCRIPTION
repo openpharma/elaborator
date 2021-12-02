@@ -1,0 +1,17 @@
+Package: elaborator
+Title: A 'shiny' Application for Exploring Laboratory Data
+Version: 1.1
+Authors@R: c(person("Silke", "Janitza", role = "aut"),
+              person("Steffen", "Jeske", email = "steffen.jeske.ext@bayer.com", role = c("aut","cre")),
+              person("Madhurima", "Majumder", role = "aut"),
+              person("Franco", "Mendolia", role = "aut"),
+              person("Hermann", "Kulmann", role = "aut"))
+Author: Silke Janitza [aut], Steffen Jeske [aut, cre], Madhurima Majumder [aut], Franco Mendolia [aut], Hermann Kulmann [aut]
+Maintainer: Steffen Jeske <steffen.jeske.ext@bayer.com>
+Description: A novel concept for generating knowledge and gaining insights into laboratory data. You will be able to efficiently and easily explore your laboratory data from different perspectives.
+Depends: R (>= 3.5.0), seriation
+License: GPL-3
+Encoding: UTF-8
+Imports: shiny, dplyr, purrr, rlang, tidyr, forcats, RColorBrewer, bsplus, dendextend, haven, reshape2, shape, shinyWidgets, shinydashboard
+LazyData: true
+RoxygenNote: 7.1.1
