@@ -133,83 +133,112 @@ elaborator_server <- function(input, output, session) {
 
   output$hover <- shiny::renderPlot({
     input$apply_quant_plot
-    shiny::req(shiny::isolate(ds2()), input$dist_hover)
+    shiny::req(shiny::isolate(ds2()), input$plot_option_switch)
 
-    if (input$dist_hover$coords_css$y > 0 & input$dist_hover$coords_css$x > 0) {
-      y <- input$dist_hover$coords_css$y
-      x <- input$dist_hover$coords_css$x
-      if(!is.null(y) && !is.null(x)){
-        dat <- shiny::isolate(ds2())
-        val <- shiny::isolate(values$default)
-        signtest2 <- shiny::isolate(input$stattest)
-        if (signtest2 == "signtest") {
-          signtest <- TRUE
-        } else {
-          signtest <- FALSE
-        }
-        sortin <- clust()
-        sortin <- sortin[sortin %in% shiny::isolate(input$select.lab)]
-        T1 <- shiny::isolate(input$trtcompar[1])
-        T2 <- shiny::isolate(input$trtcompar[-1])
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch == "hover") {
+      plot_coords <- input$dist_hover
+    } else if (input$plot_option_switch == "click") {
+      plot_coords <- input$dist_click
+    }
 
-        dat_filt <- dat %>%
-          dplyr::filter(
-            TRTP == dat %>%
-              dplyr::pull(TRTP) %>%
-              levels() %>%
-              .[ceiling(y / isolate(input$zoompx))], PARAMCD == sortin[ceiling(x / isolate(input$zoompx))]
-          )
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+      if (plot_coords$coords_css$y > 0  & plot_coords$coords_css$x > 0) {
+        y <- plot_coords$coords_css$y
+        x <- plot_coords$coords_css$x
+        if(!is.null(y) && !is.null(x)){
+          dat <- shiny::isolate(ds2())
+          val <- shiny::isolate(values$default)
+          signtest2 <- shiny::isolate(input$stattest)
+          if (signtest2 == "signtest") {
+            signtest <- TRUE
+          } else {
+            signtest <- FALSE
+          }
+          sortin <- clust()
+          sortin <- sortin[sortin %in% shiny::isolate(input$select.lab)]
+          T1 <- shiny::isolate(input$trtcompar[1])
+          T2 <- shiny::isolate(input$trtcompar[-1])
 
-        dat_filt$TRTP <- factor(dat_filt$TRTP)
-        cho <- shiny::isolate(input$trtcompar)
-        sortpoint <- shiny::isolate(input$sortpoint)
-        labelvis <- NULL
-        sameax <- shiny::isolate(input$sameaxes)
-        pval <- shiny::isolate(input$pcutoff)
-        if (input$go != 0) {
-          b.col <- box_col()
-        } else {
-          b.col <- c(colBoxplot2, colBoxplot2, colBoxplot2, colBoxplot2)
-        }
-        if (signtest2 != "none") {
-          bordcol <- shiny::isolate(border.col())
-        } else {
-          bordcol <- NULL
-        }
-        add_points <- shiny::isolate(input$add_points)
+          dat_filt <- dat %>%
+            dplyr::filter(
+              TRTP == dat %>%
+                dplyr::pull(TRTP) %>%
+                levels() %>%
+                .[ceiling(y / isolate(input$zoompx))], PARAMCD == sortin[ceiling(x / isolate(input$zoompx))]
+            )
 
-        con_lin <- shiny::isolate(input$con_lin)
+          dat_filt$TRTP <- factor(dat_filt$TRTP)
+          cho <- shiny::isolate(input$trtcompar)
+          sortpoint <- shiny::isolate(input$sortpoint)
+          labelvis <- NULL
+          sameax <- shiny::isolate(input$sameaxes)
+          pval <- shiny::isolate(input$pcutoff)
+          if (input$go != 0) {
+            b.col <- box_col()
+          } else {
+            b.col <- c(colBoxplot2, colBoxplot2, colBoxplot2, colBoxplot2)
+          }
+          if (signtest2 != "none") {
+            bordcol <- shiny::isolate(border.col())
+          } else {
+            bordcol <- NULL
+          }
+          add_points <- shiny::isolate(input$add_points)
 
-        if (!is.list(val) | length(T1) < 1 | length(T2) < 1) {
-          info <- NA
-        } else {
-          info <- elaborator_derive_test_values(
-            data = dat_filt,
+          con_lin <- shiny::isolate(input$con_lin)
+
+          if (!is.list(val) | length(T1) < 1 | length(T2) < 1) {
+            info <- NA
+          } else {
+            info <- elaborator_derive_test_values(
+              data = dat_filt,
+              signtest = signtest,
+              Visit1 = T1,
+              Visit2 = T2,
+              lab_column = "PARAMCD"
+            )
+          }
+
+          elaborator_plot_quant_trends(
+            dat1 = dat_filt,
             signtest = signtest,
-            Visit1 = T1,
-            Visit2 = T2,
-            lab_column = "PARAMCD"
+            Visit1 = cho[1],
+            Visit2 = cho[-1],
+            labcolumn = "PARAMCD",
+            cols = b.col,
+            pcutoff = pval,
+            sameaxes = sameax,
+            sortpoints = sortpoint,
+            labelvis = labelvis,
+            cexoutliers = 0.5,
+            infotest = info,
+            sortinput = sortin[ceiling(x / input$zoompx)],
+            bordercol = bordcol,
+            add_points = add_points,
+            connect_lines = con_lin
           )
         }
-
-        elaborator_plot_quant_trends(
-          dat1 = dat_filt,
-          signtest = signtest,
-          Visit1 = cho[1],
-          Visit2 = cho[-1],
-          labcolumn = "PARAMCD",
-          cols = b.col,
-          pcutoff = pval,
-          sameaxes = sameax,
-          sortpoints = sortpoint,
-          labelvis = labelvis,
-          cexoutliers = 0.5,
-          infotest = info,
-          sortinput = sortin[ceiling(x / input$zoompx)],
-          bordercol = bordcol,
-          add_points = add_points,
-          connect_lines = con_lin
+      } else {
+        plot(
+          NULL,
+          xlim = c(0, 1),
+          ylim = c(0, 1),
+          axes = FALSE,
+          xlab = "",
+          ylab = ""
         )
+        rect(
+          xleft = grconvertX(0,'ndc','user'),
+          xright = grconvertX(1, 'ndc', 'user'),
+          ybottom = grconvertY(0,'ndc','user'),
+          ytop = grconvertY(1, 'ndc', 'user'),
+          border = NA,
+          col = ColorBG,
+          xpd = TRUE
+        )
+        text(0.5, 0.6, ifelse(input$plot_option_switch == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
+        text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
       }
     } else {
       plot(
@@ -229,7 +258,7 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      text(0.5, 0.6, "Please move your mouse over the plots", col = ColorFont)
+      text(0.5, 0.6, ifelse(input$plot_option_switch == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
       text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
     }
   }, width = 400
@@ -249,13 +278,24 @@ elaborator_server <- function(input, output, session) {
       bottom = "auto",
       width = 400,
       height = "auto",
-      tags$div(id = 'demo',
-               class = "collapse",
-               shiny::fluidRow(
-                 shiny::column(2,
-                               shiny::plotOutput('hover')
-                 )
-               )
+       tags$div(id = 'demo',
+         class = "collapse",
+         shiny::fluidRow(
+           shiny::column(2,
+             shiny::plotOutput('hover')
+           )
+          ),
+          shiny::fluidRow(
+            shiny::column(12, offset = 4,
+              shiny::radioButtons(
+                inputId = "plot_option_switch",
+                label = NULL,
+                choices = c("hover", "click"),
+                selected = c("hover"),
+                inline = TRUE
+              )
+            )
+          )
       ),
       style = "z-index: 10;"
     )
@@ -405,22 +445,42 @@ elaborator_server <- function(input, output, session) {
       tags$div(id = 'demo2',
                class = "collapse",
                shiny::fluidRow(
-                 shiny::column(2,
-                               shiny::plotOutput(
-                                 'hover2'
-                               )
-                 )
-               )
+           shiny::column(2,
+             shiny::plotOutput('hover2')
+           )
+          ),
+          shiny::fluidRow(
+            shiny::column(12, offset = 4,
+              shiny::radioButtons(
+                inputId = "plot_option_switch2",
+                label = NULL,
+                choices = c("hover", "click"),
+                selected = c("hover"),
+                inline = TRUE
+              )
+            )
+          )
       ),
       style = "z-index: 10;"
     )
   })
 
-  shiny::observe({
+shiny::observe({
     output$hover2 <- shiny::renderPlot({
       input$apply_qual_plot
-      shiny::req(ds2(), input$dist_hover2, Summa())
-      if (input$dist_hover2$coords_css$y > 0 & input$dist_hover2$coords_css$x > 0) {
+      shiny::req(ds2(), Summa(), input$plot_option_switch2)
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch2 == "hover") {
+      plot_coords <- input$dist_hover2
+    } else if (input$plot_option_switch2 == "click") {
+      plot_coords <- input$dist_click2
+    }
+
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+
+
+      if (plot_coords$coords_css$y > 0 & plot_coords$coords_css$x > 0) {
         dat <- ds2()
         Variab <- clust()
 
@@ -430,8 +490,8 @@ elaborator_server <- function(input, output, session) {
             TRTP == dat %>%
               dplyr::pull(TRTP) %>%
               levels() %>%
-              .[ceiling(input$dist_hover2$coords_css$y / input$zoompx)],
-            PARAMCD == Variab[ceiling(input$dist_hover2$coords_css$x / input$zoompx)]
+              .[ceiling(plot_coords$coords_css$y / input$zoompx)],
+            PARAMCD == Variab[ceiling(plot_coords$coords_css$x / input$zoompx)]
           )
 
         dat_filt$TRTP <- factor(dat_filt$TRTP)
@@ -442,7 +502,7 @@ elaborator_server <- function(input, output, session) {
         suppressWarnings(
           elaborator_plot_qual_trends(
             dat1 = dat_filt,
-            Variab[ceiling(input$dist_hover2$coords_css$x / input$zoompx)],
+            Variab[ceiling(plot_coords$coords_css$x / input$zoompx)],
             fontsize = 2,
             method = meth,
             color_palette = c('white', colChoice[[shiny::req(input$select.pal1)]]$col, 'black'),
@@ -467,11 +527,33 @@ elaborator_server <- function(input, output, session) {
           col = ColorBG,
           xpd = TRUE
         )
-        text(0.5, 0.6, "Please move your mouse over the plots", col = ColorFont)
+        text(0.5, 0.6, ifelse(input$plot_option_switch2 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
+        text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
+      }
+    } else {
+        plot(
+          NULL,
+          xlim = c(0, 1),
+          ylim = c(0, 1),
+          axes = FALSE,
+          xlab = "",
+          ylab = ""
+        )
+        rect(
+          xleft = grconvertX(0,'ndc','user'),
+          xright = grconvertX(1, 'ndc', 'user'),
+          ybottom = grconvertY(0,'ndc','user'),
+          ytop = grconvertY(1, 'ndc', 'user'),
+          border = NA,
+          col = ColorBG,
+          xpd = TRUE
+        )
+        text(0.5, 0.6, ifelse(input$plot_option_switch2 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
         text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
       }
     }, width = data_param()$nvisit * 100)
   })
+
 
   #### REFERENCE VALUE BASED PATTERN ####
 
@@ -518,23 +600,45 @@ elaborator_server <- function(input, output, session) {
       bottom = "auto",
       width = 400,
       height = "auto",
-      tags$div(
+     tags$div(
         id = 'demo3',
         class = "collapse",
         shiny::fluidRow(
-          shiny::column(2,
-                        shiny::plotOutput('hover3')
+           shiny::column(2,
+             shiny::plotOutput('hover3')
+           )
+          ),
+          shiny::fluidRow(
+            shiny::column(12, offset = 4,
+              shiny::radioButtons(
+                inputId = "plot_option_switch3",
+                label = NULL,
+                choices = c("hover", "click"),
+                selected = c("hover"),
+                inline = TRUE
+              )
+            )
           )
-        )
       ),
       style = "z-index: 10;"
     )
   })
 
-  output$hover3 <- shiny::renderPlot({
+   output$hover3 <- shiny::renderPlot({
     input$apply_ref_plot
-    shiny::req(ds2(), input$dist_hover3, input$abnormal_values_factor)
-    if (input$dist_hover3$coords_css$y > 0 & input$dist_hover3$coords_css$x > 0
+    shiny::req(ds2(), input$abnormal_values_factor, input$plot_option_switch3)
+
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch3 == "hover") {
+      plot_coords <- input$dist_hover3
+    } else if (input$plot_option_switch3 == "click") {
+      plot_coords <- input$dist_click3
+    }
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+
+
+      if (plot_coords$coords_css$y > 0 & plot_coords$coords_css$x > 0
         & !is.na(input$abnormal_values_factor) & input$abnormal_values_factor >=0) {
       dat <- ds2()
 
@@ -549,7 +653,7 @@ elaborator_server <- function(input, output, session) {
         dplyr::filter(TRTP == dat %>%
                         dplyr::pull(TRTP) %>%
                         levels() %>%
-                        .[ceiling(input$dist_hover3$coords_css$y / input$zoompx)], PARAMCD == sorti[ceiling(input$dist_hover3$coords_css$x / input$zoompx)])
+                        .[ceiling(plot_coords$coords_css$y / input$zoompx)], PARAMCD == sorti[ceiling(plot_coords$coords_css$x / input$zoompx)])
       dat_filt$TRTP <- factor(dat_filt$TRTP)
 
       cex <- shiny::isolate(input$cex.rvbp)
@@ -559,7 +663,7 @@ elaborator_server <- function(input, output, session) {
         data = dat_filt,
         fontsize = 2,
         criterion = crit,
-        sorting_vector = sorti[ceiling(input$dist_hover3$coords_css$x / input$zoompx)],
+        sorting_vector = sorti[ceiling(plot_coords$coords_css$x / input$zoompx)],
         abnormal_value_factor = shiny::isolate(input$abnormal_values_factor)
       )
 
@@ -581,8 +685,30 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      text(0.5, 0.6, "Please move your mouse over the plots", col = ColorFont)
+      text(0.5, 0.6, ifelse(input$plot_option_switch3 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
       text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
+    }
+    } else {
+      plot(
+        NULL,
+        xlim = c(0, 1),
+        ylim = c(0, 1),
+        axes = FALSE,
+        xlab = "",
+        ylab = ""
+      )
+      rect(
+        xleft = grconvertX(0, 'ndc', 'user'),
+        xright = grconvertX(1, 'ndc', 'user'),
+        ybottom = grconvertY(0, 'ndc', 'user'),
+        ytop = grconvertY(1, 'ndc', 'user'),
+        border = NA,
+        col = ColorBG,
+        xpd = TRUE
+      )
+      text(0.5, 0.6, ifelse(input$plot_option_switch3 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
+      text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
+
     }
   }, width = 400)
 
@@ -1158,7 +1284,13 @@ elaborator_server <- function(input, output, session) {
                            outputId = 'inoutPlot',
                            height = paste0(hpx * zoompx, 'px'),
                            width = paste0(wpx * zoompx, 'px'),
-                           hover = clickOpts("dist_hover3", clip = FALSE)
+                           hover = clickOpts(
+                             "dist_hover3",
+                             clip = FALSE
+                           ),
+                           click = clickOpts("dist_click3",
+                             clip = FALSE
+                           )
                          )
         )
       })
@@ -1200,7 +1332,13 @@ elaborator_server <- function(input, output, session) {
             outputId = 'trendPlot',
             height = paste0(hpx * zoompx, 'px'),
             width = paste0(wpx * zoompx, 'px'),
-            hover = clickOpts("dist_hover2", clip = FALSE)
+            hover = clickOpts(
+               "dist_hover2",
+               clip = FALSE
+             ),
+             click = clickOpts("dist_click2",
+               clip = FALSE
+             )
           )
         )
       })
@@ -1344,6 +1482,9 @@ elaborator_server <- function(input, output, session) {
                            width = paste0(wpx * zoompx, 'px'),
                            hover = clickOpts(
                              "dist_hover",
+                             clip = FALSE
+                           ),
+                           click = clickOpts("dist_click",
                              clip = FALSE
                            )
                          )
