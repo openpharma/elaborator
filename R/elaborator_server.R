@@ -76,7 +76,7 @@ elaborator_server <- function(input, output, session) {
         inputId = 'file',
         label = 'Choose RData file',
         multiple = FALSE,
-        accept = '.RData'
+        accept = c('.RData','.rdata')
       )
     } else if (input$impswitch == '*.CSV file') {
       shiny::tagList(
