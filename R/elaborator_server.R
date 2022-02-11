@@ -771,7 +771,7 @@ shiny::observe({
 
         if (!is.null(input$file$datapath)) {
           # error message if selected data have a different format than rdata
-          if (utils::tail(strsplit(input$file$datapath, ".", fixed = TRUE)[[1]], n = 1) != "RData") {
+          if (!utils::tail(strsplit(input$file$datapath, ".", fixed = TRUE)[[1]], n = 1) %in% c("rdata","RData")) {
             elaborator_data <- NULL
             error_message <- paste0(
               "Wrong data format. <br> You have selected a ",
