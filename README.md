@@ -7,22 +7,6 @@ and easily explore your laboratory data from different perspectives.
 
 ## Installation
 
-To install the e**lab**orator from CRAN, it is recommended to install
-the package from source with:
-
-``` r
-install.packages("elaborator")
-remove.packages("elaborator")
-install.packages("elaborator", type="source")
-```
-
-The first call of “install.packages” is necessary to install other
-required R packages as binary. Afterwards the e**lab**orator is
-deinstalled and installed from source. Alternatively, if Rtools has been
-installed and properly set up, the first two lines can be skipped.
-Installing the package directly from binary currently causes an error
-for some users when trying to launch the e**lab**orator.
-
 You can install the development version from
 [GitHub](https://github.com/) with:
 
