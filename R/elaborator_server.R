@@ -8,7 +8,8 @@
 
 elaborator_server <- function(input, output, session) {
 
-  LBTESTCD <- TRTP <- AVISIT <- orderinglab <- median_value <- LBORRES_diff <- SUBJIDN <- tr <- data <- nonmissing <- tot <- percentage <- trt <- PARAMCD <- nonmiss <- nr_visits <- . <- LBORRES <- LBORNRLO <- LBORNRHI <- highref <- lowref <- InQuRa <- Range <- refRange <- LBORRES.y <- LBORRES.x <- vari <- js <- NULL
+
+  LBTESTCD <- TRTP <- AVISIT <- orderinglab <- median_value <- LBORRES_diff <- SUBJIDN <- tr <- data <- nonmissing <- tot <- percentage <- trt <- LBTESTCD <- nonmiss <- nr_visits <- . <- LBORRES <- LBORNRLO <- LBORNRHI <- highref <- lowref <- InQuRa <- Range <- refRange <- LBORRES.y <- LBORRES.x <- vari <- js <- NULL
 
   colBoxplot4 <- "#004a8a"
   colBoxplot3 <- "#0075bc"
@@ -131,85 +132,491 @@ elaborator_server <- function(input, output, session) {
     }
   })
 
+  shiny::observeEvent(app_input(), {
+    if(!is.null(app_input())) {
+      shinyWidgets::updatePrettyRadioButtons(
+        session,
+        inputId = 'impswitch',
+        choices = c('Loaded Data','*.RData file', '*.CSV file')
+      )
+    }
+  })
+
+  #### data pre-processing for graphs ####
+  # 1. load data and check for requirements
+  #    reactive:  raw_data_and_warnings()
+  # 2. filter by filter-tab
+  #    reactive:  filtered_raw_data()
+  # 3. filter by upload selection
+  #    reactive:  filtered_and_reduced_raw_data()
+  # 4. create 'remove'-flags due to tolerated missing percentage
+  #    reactive:  data_with_missing_flag()
+  # 5. remove visits due to tolerated missing
+  #    reactive:  data_without_missing_visits()
+  # 6. create/change correct variable classes
+  #    reactive:  data_filtered_by_app_selection()
+  # 7. re-factor lab parameter value
+  #    reactive:  data_with_selected_factor_levels()
+  # 8. reduce data to patients with all lab parameters non missing
+  #    reactive:  data_with_only_non_missings_over_visits()
+
+  #### 1.load data and perform checks: (raw_data_and_warnings()) ####
+  # used function(s):
+  # elaborator_load_and_check() & elaborator_fill_with_missings()
+  # purpose:
+  # to first load the data and check for required variables
+  # and than merge an empty data set with every potential subjectid, visit
+  # and lab parameter to ensure the calculations for emtpy visits are correct.
+  # reactivity triggers :
+  # input$impswitch / input$file$datapath / input$csv_file$datapath / app_input()
+  # input$sep / input$quote / input$dec
+
+  raw_data_and_warnings <- shiny::reactive({
+    input$impswitch
+    tmp <- elaborator_load_and_check(
+      data_switch = input$impswitch,
+      rdata_file_path = input$file$datapath,
+      csv_file_path = input$csv_file$datapath,
+      loaded_file = app_input(),
+      separator = input$sep,
+      quote = input$quote,
+      decimal = input$dec
+    )
+    if (!is.null(tmp$data)) {
+      tmp$data <- elaborator_fill_with_missings(
+        elab_data = tmp$data
+      )
+    }
+
+    list(
+      data = tmp$data,
+      message = tmp$message
+    )
+  })
+
+  #Datatable output with raw data
+  output$raw_data_table <- DT::renderDataTable(
+    DT::datatable(
+      shiny::req(raw_data_and_warnings()$data),
+      extensions = "Buttons",
+      options = list(
+      dom = "Brtip",
+      buttons = c("copy", "print", "pageLength", I("colvis"))
+      ),
+      caption = "Raw data:",
+      filter = list(
+        position = 'top',
+        clear = FALSE
+      )
+    )
+  )
+
+  # Output Loading error message if available
+  output$err_message <- renderText({
+    if(!is.null(raw_data_and_warnings()$message)) {
+      str1 <- raw_data_and_warnings()$message
+      paste(str1)
+    }
+  })
+
+  #### 2. filter by app filter-tab  ####
+  # used function:
+  # ---
+  # purpose:
+  # filter data set by filter-tab selection within elaborator app.
+  #
+  # reactivity triggers :
+  # raw_data_and_warnings() / <filter selection within app>
+
+  filtered_raw_data <- shiny::reactive({
+    shiny::req(raw_data_and_warnings()$data)
+    elab_data <- raw_data_and_warnings()$data
+    data <- elab_data
+    if (length(id_elab_m$myList) != 0) {
+      names <- id_elab_m$myList2
+      vars <- id_elab_m$myList
+      if (length(id_elab_m$myList) && !is.null(id_elab_m$myList2)) {
+        data_filt <- data
+        for (i in 1:length(id_elab_m$myList)) {
+          if(elab_data %>%
+             dplyr::pull(id_elab_m$myList2[i]) %>%
+             is.numeric()) {
+            if (!is.null(input[[id_elab_m$myList[[i]]]]))
+              data_filt <- data_filt[data_filt %>%
+                                       dplyr::pull(id_elab_m$myList2[i]) %>%
+                                       dplyr::between(input[[id_elab_m$myList[[i]]]][1],input[[id_elab_m$myList[[i]]]][2]),]
+          } else {
+            data_filt <- data_filt %>%
+              dplyr::filter(!! rlang::sym(id_elab_m$myList2[i]) %in% c(input[[id_elab_m$myList[i]]]))
+          }
+        }
+      }
+    } else {
+      data_filt <- data
+    }
+    data_filt
+  })
+
+  #### 3. filter data by app settings ####
+  # used function:
+  # elaborator_filter_by_app_selection
+  #
+  # purpose:
+  # filter data set by upload selection within elaborator app (visits/treatment/labparameter)
+  #
+  # reactivity triggers :
+  # filtered_raw_data() / input$select.visit / input$select.treatments / input$select.lab
+  filtered_and_reduced_raw_data <- shiny::reactive({
+    filtered_data <- elaborator_filter_by_app_selection(
+      elab_data = filtered_raw_data(),
+      visits = input$select.visit,
+      treat = input$select.treatments,
+      labparameter =input$select.lab
+    )
+    filtered_data
+  })
+
+  #### 4. create 'remove'-flags due to tolerated missing percentage ####
+  # used function:
+  # elaborator_remove_visits_due_tolerated_missings
+  #
+  # purpose:
+  # create 'remove'-flags due to tolerated missing percentage.
+  #
+  # reactivity triggers :
+  # filtered_and_reduced_raw_data() / input$select.toleratedPercentage
+
+  data_with_missing_flag <- shiny::reactive({
+    shiny::req(filtered_and_reduced_raw_data())
+    shiny::req(input$select.toleratedPercentage)
+
+    filtered_and_removed_visits <- elaborator_remove_visits_due_tolerated_missings(
+      elab_data = filtered_and_reduced_raw_data(),
+      tolerated_value = (input$select.toleratedPercentage/100)
+    )
+    filtered_and_removed_visits
+  })
+
+  ####    5. remove visits due to tolerated percentage missing:####
+  # used function:
+  # ---
+  #
+  # purpose: remove visits due to tolerated percentage missing
+  #
+  #
+  # reactivity triggers :
+  # data_with_missing_flag()
+
+  data_without_missing_visits <- shiny::reactive({
+    #remove visits
+    shiny::req(data_with_missing_flag())
+    filtered_and_removed_visits <- data_with_missing_flag() %>%
+      dplyr::filter(visit_removed == FALSE)
+    filtered_and_removed_visits
+  })
+
+  ####    6. change classes and factor levels: ####
+  # used function:
+  # elaborator_change_class_required_variables
+  #
+  # purpose: change classes and factor levels
+  #
+  # reactivity triggers :
+  # data_without_missing_visits() / input$select.visit / input$select.treatments / raw_data_and_warnings()
+  data_filtered_by_app_selection <- shiny::reactive({
+    shiny::req(input$select.treatments, input$select.visit, data_without_missing_visits(), raw_data_and_warnings())
+    filtered_data2 <- elaborator_change_class_required_variables(
+      elab_data = data_without_missing_visits(),
+      visit = input$select.visit,
+      treatment = input$select.treatments,
+      lab = unique(raw_data_and_warnings()$data$LBTESTCD)
+    )
+    filtered_data2
+  })
+
+
+  #### preprocess lines for quantitative trends####
+  quant_plot_data_lines <- shiny::reactive({
+    shiny::req(filtered_and_reduced_raw_data())
+    tmp <- filtered_and_reduced_raw_data() %>%
+      dplyr::group_by(
+        TRTP, LBTESTCD
+      ) %>%
+      dplyr::select(TRTP, LBTESTCD, SUBJIDN, AVISIT, LBORRES) %>%
+      ## by group? map_group?
+      tidyr::pivot_wider(names_from = AVISIT, values_from = LBORRES) %>%
+      dplyr::select(-SUBJIDN)
+    tmp <- tmp[,c("TRTP","LBTESTCD",levels(data_with_selected_factor_levels()$AVISIT))]
+    tmp
+  })
+
+  #### AI Sorting ####
+  ####    a1. prepare distance matrix (only if ai sorting is selected) ####
+  prepare_dist_matrix_for_clustering <- shiny::eventReactive(c(input$go3), {
+    shiny::req(data_filtered_by_app_selection())
+    ds <- data_filtered_by_app_selection()
+    if (shiny::isolate(input$orderinglab) == "auto") {
+      first <- shiny::isolate(input$select.ai.first)
+      last <- shiny::isolate(input$select.ai.last)
+      shiny::validate(
+        shiny::need(
+          first != last,
+          "Please select different Timepoints for Seriation!
+          The first timepoint must differ from second timepoint."
+        )
+      )
+
+      elaborator_prepare_clustering_matrix(
+        elab_data = ds,
+        first_variable = first,
+        last_variable = last
+      )
+    } else {
+      NULL
+    }
+  })
+
+  ####    a2. use package seriation for ordering lab parameter ####
+  lab_parameter_order_by_clustering <- shiny::eventReactive(input$go3, {
+    shiny::req(shiny::isolate(data_filtered_by_app_selection()))
+    tmp2 <- shiny::isolate(prepare_dist_matrix_for_clustering())
+    ds <- shiny::isolate(data_filtered_by_app_selection())
+
+    if (input$orderinglab == "asinp") {
+      as.character(unique(ds$LBTESTCD))
+    }
+    else if (input$orderinglab == "alphabetically") {
+      sort(as.character(unique(ds$LBTESTCD)))
+    }
+    else if (input$orderinglab == "auto") {
+      shiny::req(prepare_dist_matrix_for_clustering())
+      tmp2 %>%
+        elaborator_calculate_spearman_distance() %>%
+        seriation::seriate(method = input$clusterMethod) %>%
+        seriation::get_order() %>%
+        rownames(tmp2)[.]
+    } else if (input$orderinglab == "manual") {
+      input$arrange.lab
+    } else {
+      as.character(unique(ds$LBTESTCD))
+    }
+  })
+
+
+  #### 7. refactor lab parameter value: ####
+  # used function: ---
+  #
+  # purpose: re-factor lab parameter value
+  #
+  #
+  # reactivity triggers :
+  # data_filtered_by_app_selection() / input$go3
+
+  data_with_selected_factor_levels <- shiny::eventReactive(c(data_filtered_by_app_selection(),input$go3),{
+    tmp <- data_filtered_by_app_selection()
+    if(shiny::isolate(input$orderinglab) == "asinp") {
+      lab_levels <- unique(raw_data_and_warnings()$data$LBTESTCD)
+      tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
+    } else if (shiny::isolate(input$orderinglab) =="alphabetically"){
+      lab_levels <- sort(unique(raw_data_and_warnings()$data$LBTESTCD))
+      tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
+    } else if (shiny::isolate(input$orderinglab) =="auto") {
+      lab_levels <- shiny::isolate(lab_parameter_order_by_clustering())
+      # Thu Sep 28 11:13:35 2023 ------------------------------
+      lab_levels <- c(lab_levels, as.character(unique(tmp$LBTESTCD)[which(!unique(tmp$LBTESTCD) %in% lab_levels)]))
+      tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
+
+    } else if(shiny::isolate(input$orderinglab) == "manual"){
+      lab_levels <- input$arrange.lab
+      tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
+    }
+    tmp
+  })
+
+
+  ####  8. reduce data to patients with all lab parameters non missing: ####
+  # used function: ---
+  #
+  # purpose: reduce data to patients with all lab parameters non missing
+  #
+  #
+  # reactivity triggers :
+  # data_with_selected_factor_levels() / input$select.visit
+
+  data_with_only_non_missings_over_visits <- shiny::reactive({
+    shiny::req(data_with_selected_factor_levels())
+    shiny::req(input$select.visit)
+    tmp <- data_with_selected_factor_levels() %>%
+      dplyr::full_join(
+        data_with_selected_factor_levels() %>%
+          dplyr::group_by(TRTP,LBTESTCD) %>%
+          dplyr::summarise(visits_non_missing = length(unique(AVISIT)),.groups = "keep"),
+        by = c("TRTP","LBTESTCD")
+      )
+    tmp2 <- tmp %>%
+      dplyr::right_join(
+        tmp %>%
+        dplyr::group_by(SUBJIDN,LBTESTCD,TRTP) %>%
+        dplyr::summarise(
+          non_missing_values = sum(!is.na(LBORRES)),
+          all_complete = ifelse(non_missing_values == visits_non_missing, TRUE,FALSE),
+          .groups = "keep"
+        ) %>% dplyr::ungroup() %>% dplyr::select(SUBJIDN,LBTESTCD,TRTP,all_complete) %>%
+          dplyr::distinct(),
+        by = c("SUBJIDN","LBTESTCD","TRTP")
+      ) %>%
+      dplyr::filter(all_complete == TRUE)
+    tmp2
+  })
+
+  ####    3. dendrogram output ####
+  output$dendro_1 <- shiny::renderPlot({
+    shiny::req(prepare_dist_matrix_for_clustering(), shiny::isolate(input$clusterMethod))
+    if ((startsWith(shiny::isolate(input$clusterMethod), "OLO") | startsWith(shiny::isolate(input$clusterMethod), "GW"))) {
+      tmp <- prepare_dist_matrix_for_clustering()
+      ser <- seriation::seriate(elaborator_calculate_spearman_distance(tmp), method = shiny::isolate(input$clusterMethod))
+      asdendro <- stats::as.dendrogram(ser[[1]])
+      dendro <- dendextend::assign_values_to_leaves_edgePar(dend = asdendro)
+      graphics::rect(
+        xleft = graphics::grconvertX(0, 'ndc', 'user'),
+        xright = graphics::grconvertX(1,'ndc', 'user'),
+        ybottom = graphics::grconvertY(0, 'ndc', 'user'), ytop = graphics::grconvertY(1,'ndc', 'user'),
+        border = NA,
+        col = ColorBG,
+        xpd = TRUE
+      )
+      # on_ex <- graphics::par(no.readonly = TRUE)
+      # on.exit(graphics::par(on_ex))
+      graphics::par(bg = ColorBG)
+      graphics::plot(dendro, ylab = "Distance", horiz = FALSE)
+    }
+  })
+
+
+  #### QUALITATIVE TRENDS ####
   output$hover <- shiny::renderPlot({
     input$apply_quant_plot
-    shiny::req(shiny::isolate(ds2()), input$dist_hover)
+    shiny::req(shiny::isolate(data_with_selected_factor_levels()), input$plot_option_switch)
 
-    if (input$dist_hover$coords_css$y > 0 & input$dist_hover$coords_css$x > 0) {
-      y <- input$dist_hover$coords_css$y
-      x <- input$dist_hover$coords_css$x
-      if(!is.null(y) && !is.null(x)){
-        dat <- shiny::isolate(ds2())
-        val <- shiny::isolate(values$default)
-        signtest2 <- shiny::isolate(input$stattest)
-        if (signtest2 == "signtest") {
-          signtest <- TRUE
-        } else {
-          signtest <- FALSE
-        }
-        sortin <- clust()
-        sortin <- sortin[sortin %in% shiny::isolate(input$select.lab)]
-        T1 <- shiny::isolate(input$trtcompar[1])
-        T2 <- shiny::isolate(input$trtcompar[-1])
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch == "hover") {
+      plot_coords <- input$dist_hover
+    } else if (input$plot_option_switch == "click") {
+      plot_coords <- input$dist_click
+    }
 
-        dat_filt <- dat %>%
-          dplyr::filter(
-            TRTP == dat %>%
-              dplyr::pull(TRTP) %>%
-              levels() %>%
-              .[ceiling(y / isolate(input$zoompx))], PARAMCD == sortin[ceiling(x / isolate(input$zoompx))]
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+      if (plot_coords$coords_css$y > 0  & plot_coords$coords_css$x > 0) {
+        y <- plot_coords$coords_css$y
+        x <- plot_coords$coords_css$x
+        if(!is.null(y) && !is.null(x)) {
+
+          #use only subjects with non missing values for all visits
+            dat <- data_with_only_non_missings_over_visits()
+            #load statistical test values (saved in values$default)
+            val <- shiny::isolate(values$default)
+            if (!is.list(val)) {
+              info <- NA
+            } else {
+              info <- shiny::isolate(values$default)
+            }
+            #replace values$default with newer version
+            #load statistical test values (saved in statistical_test_resulst$var)
+
+            if (input$go != 0) {
+              b.col <- shiny::isolate(box_col())
+            } else {
+              b.col <- c(colBoxplot2, colBoxplot2, colBoxplot2, colBoxplot2)
+            }
+            if (shiny::isolate(input$stattest) != "none") {
+              bordcol <- shiny::isolate(border.col())
+            } else {
+              bordcol <- NULL
+            }
+          # Thu Sep 28 07:23:34 2023 --- bug fix ---
+          sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
+          # Thu Sep 28 07:23:50 2023 ------------------------------
+
+          dat_filt <- dat %>%
+            dplyr::filter(
+              TRTP == dat %>%
+                dplyr::pull(TRTP) %>%
+                levels() %>%
+                .[ceiling(y / isolate(input$zoompx))], LBTESTCD == sortin[ceiling(x / isolate(input$zoompx))]
+            )
+
+          dat_filt$TRTP <- factor(dat_filt$TRTP)
+          dat_filt$LBTESTCD <- factor(dat_filt$LBTESTCD)
+
+
+          if(input$con_lin){
+           lines_data <- quant_plot_data_lines() %>%
+            dplyr::filter(
+              TRTP == dat %>%
+                dplyr::pull(TRTP) %>%
+                levels() %>%
+                .[ceiling(y / isolate(input$zoompx))], LBTESTCD == sortin[ceiling(x / isolate(input$zoompx))]
+            )
+          } else {
+            lines_data <- NULL
+          }
+
+          if (!is.null(statistical_test_results$var)) {
+          infotest <- statistical_test_results$var %>%
+            dplyr::filter(
+              TRTP == dat %>%
+                dplyr::pull(TRTP) %>%
+                levels() %>%
+                .[ceiling(y / isolate(input$zoompx))], LBTESTCD == sortin[ceiling(x / isolate(input$zoompx))]
+            )
+          } else {
+            infotest <- NULL
+          }
+
+          elaborator_plot_quant_trends2(
+            dat_filt,
+            #shiny::isolate(data_with_only_non_missings_over_visits()),
+            signtest = ifelse(shiny::isolate(input$stattest) == "signtest", TRUE, FALSE),
+            Visit1 = shiny::isolate(input$trtcompar)[1],
+            Visit2 = shiny::isolate(input$trtcompar)[-1],
+            labcolumn = "LBTESTCD",
+            cols = b.col,
+            pcutoff = shiny::isolate(input$pcutoff),
+            sameaxes = shiny::isolate(input$sameaxes),
+            sortpoints = shiny::isolate(input$sortpoint),
+            labelvis = NULL,
+            infotest = infotest,
+            sortinput = levels(dat_filt$LBTESTCD),
+            bordercol = bordcol,
+            add_points = shiny::isolate(input$add_points),
+            connect_lines = shiny::isolate(input$con_lin),
+            lin_data = lines_data,
+            outliers = shiny::isolate(input$outlier),
+            tolerated_percentage = shiny::isolate(input$select.toleratedPercentage),
+            color_lines_options = shiny::isolate(input$con_lin_options),
+            custom_visits = shiny::isolate(input$custom_visits)
           )
-
-        dat_filt$TRTP <- factor(dat_filt$TRTP)
-        cho <- shiny::isolate(input$trtcompar)
-        sortpoint <- shiny::isolate(input$sortpoint)
-        labelvis <- NULL
-        sameax <- shiny::isolate(input$sameaxes)
-        pval <- shiny::isolate(input$pcutoff)
-        if (input$go != 0) {
-          b.col <- box_col()
-        } else {
-          b.col <- c(colBoxplot2, colBoxplot2, colBoxplot2, colBoxplot2)
         }
-        if (signtest2 != "none") {
-          bordcol <- shiny::isolate(border.col())
-        } else {
-          bordcol <- NULL
-        }
-        add_points <- shiny::isolate(input$add_points)
-
-        con_lin <- shiny::isolate(input$con_lin)
-
-        if (!is.list(val) | length(T1) < 1 | length(T2) < 1) {
-          info <- NA
-        } else {
-          info <- elaborator_derive_test_values(
-            data = dat_filt,
-            signtest = signtest,
-            Visit1 = T1,
-            Visit2 = T2,
-            lab_column = "PARAMCD"
-          )
-        }
-
-        elaborator_plot_quant_trends(
-          dat1 = dat_filt,
-          signtest = signtest,
-          Visit1 = cho[1],
-          Visit2 = cho[-1],
-          labcolumn = "PARAMCD",
-          cols = b.col,
-          pcutoff = pval,
-          sameaxes = sameax,
-          sortpoints = sortpoint,
-          labelvis = labelvis,
-          cexoutliers = 0.5,
-          infotest = info,
-          sortinput = sortin[ceiling(x / input$zoompx)],
-          bordercol = bordcol,
-          add_points = add_points,
-          connect_lines = con_lin
+      } else {
+        plot(
+          NULL,
+          xlim = c(0, 1),
+          ylim = c(0, 1),
+          axes = FALSE,
+          xlab = "",
+          ylab = ""
         )
+        rect(
+          xleft = grconvertX(0,'ndc','user'),
+          xright = grconvertX(1, 'ndc', 'user'),
+          ybottom = grconvertY(0,'ndc','user'),
+          ytop = grconvertY(1, 'ndc', 'user'),
+          border = NA,
+          col = ColorBG,
+          xpd = TRUE
+        )
+        text(0.5, 0.6, ifelse(input$plot_option_switch == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
+        text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
       }
     } else {
       plot(
@@ -229,7 +636,7 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      text(0.5, 0.6, "Please move your mouse over the plots", col = ColorFont)
+      text(0.5, 0.6, ifelse(input$plot_option_switch == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
       text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
     }
   }, width = 400
@@ -242,7 +649,7 @@ elaborator_server <- function(input, output, session) {
       fixed = TRUE,
       draggable = TRUE,
       HTML(paste0("<div style='background-color:", ColorBG, "'>")),
-      HTML('<button style = "background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo" style="color:white;"> <i class="fa fa-search-plus"></i> Open/Close Zoom Panel</button>'),
+      HTML('<button style = "background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo" style="color:white;"> <i class="fa-solid fa-search-plus"></i> Open/Close Zoom Panel</button>'),
       top = 70,
       left = "auto",
       right = 100,
@@ -250,44 +657,87 @@ elaborator_server <- function(input, output, session) {
       width = 400,
       height = "auto",
       tags$div(id = 'demo',
-               class = "collapse",
-               shiny::fluidRow(
-                 shiny::column(2,
-                               shiny::plotOutput('hover')
-                 )
-               )
+         class = "collapse",
+         shiny::fluidRow(
+           shiny::column(2,
+             shiny::plotOutput('hover')
+           )
+          ),
+          shiny::fluidRow(
+            shiny::column(12, offset = 4,
+              shiny::radioButtons(
+                inputId = "plot_option_switch",
+                label = NULL,
+                choices = c("hover", "click"),
+                selected = c("hover"),
+                inline = TRUE
+              )
+            )
+          ),
+         shiny::fluidRow(
+           shiny::column(12,
+             uiOutput('hover_info_text')
+           )
+         )
+
       ),
       style = "z-index: 10;"
     )
   })
 
-  output$dendro_1 <- shiny::renderPlot({
-    shiny::req(pre_clust(), shiny::isolate(input$clusterMethod))
-    if ((startsWith(shiny::isolate(input$clusterMethod), "OLO") | startsWith(shiny::isolate(input$clusterMethod), "GW"))) {
-      tmp <- pre_clust()
-      ser <- seriation::seriate(elaborator_calculate_spearman_distance(tmp), method = shiny::isolate(input$clusterMethod))
-      asdendro <- stats::as.dendrogram(ser[[1]])
-      dendro <- dendextend::assign_values_to_leaves_edgePar(dend = asdendro)
-      graphics::rect(
-        xleft = graphics::grconvertX(0, 'ndc', 'user'),
-        xright = graphics::grconvertX(1,'ndc', 'user'),
-        ybottom = graphics::grconvertY(0, 'ndc', 'user'), ytop = graphics::grconvertY(1,'ndc', 'user'),
-        border = NA,
-        col = ColorBG,
-        xpd = TRUE
-      )
-      on_ex <- graphics::par(no.readonly = TRUE)
-      on.exit(graphics::par(on_ex))
-      graphics::par(bg = ColorBG)
-      graphics::plot(dendro, ylab = "Distance", horiz = FALSE)
+  output$hover_info_text <- shiny::renderUI({
+    input$apply_quant_plot
+    shiny::req(shiny::isolate(data_with_missing_flag()), input$plot_option_switch)
+
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch == "hover") {
+      plot_coords <- input$dist_hover
+    } else if (input$plot_option_switch == "click") {
+      plot_coords <- input$dist_click
+    }
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+      if (plot_coords$coords_css$y > 0  & plot_coords$coords_css$x > 0) {
+        y <- plot_coords$coords_css$y
+        x <- plot_coords$coords_css$x
+        if (!is.null(y) && !is.null(x)) {
+
+
+          dat <- shiny::isolate(data_with_only_non_missings_over_visits())
+          #dat <- shiny::isolate(data_with_selected_factor_levels())
+
+          # Mon Apr 15 08:38:36 2024 ------------------------------
+          sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
+          #sortin <- levels(dat$LBTESTCD)
+          val <- shiny::isolate(values$default)
+          hover_treatment <- dat %>%
+            dplyr::pull(TRTP) %>%
+            levels() %>%
+            .[ceiling(y / isolate(input$zoompx))]
+
+          hover_labparameter <- sortin[ceiling(x / isolate(input$zoompx))]
+
+          text <- elaborator_create_hover_info_text(
+            elab_data = data_with_missing_flag(),
+            labparameter = hover_labparameter,
+            treat = hover_treatment,
+            select.visit = input$select.visit
+          )
+
+          HTML(
+            text
+          )
+        }
+      }
+    } else {
+      HTML("")
     }
   })
 
-  #### QUALITATIVE TRENDS ####
   output$dendro_2 <- shiny::renderPlot({
     if ((startsWith(shiny::isolate(input$clusterMethod), "OLO") | startsWith(shiny::isolate(input$clusterMethod), "GW"))) {
-      shiny::req(pre_clust(), shiny::isolate(input$clusterMethod))
-      tmp <- pre_clust()
+      shiny::req(prepare_dist_matrix_for_clustering(), shiny::isolate(input$clusterMethod))
+      tmp <- prepare_dist_matrix_for_clustering()
       ser <- seriation::seriate(elaborator_calculate_spearman_distance(tmp), method = shiny::isolate(input$clusterMethod))
       asdendro <- stats::as.dendrogram(ser[[1]])
       dendro2 <- dendextend::assign_values_to_leaves_edgePar(dend = asdendro)
@@ -301,16 +751,16 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      on_ex <- graphics::par(no.readonly = TRUE)
-      on.exit(graphics::par(on_ex))
+      # on_ex <- graphics::par(no.readonly = TRUE)
+      # on.exit(graphics::par(on_ex))
       graphics::par(bg = ColorBG)
       graphics::plot(dendro2, ylab = "Distance", horiz = FALSE)
     }
   })
 
   output$legend <- shiny::renderPlot({
-    on_ex <- graphics::par("mfrow","oma","mar")
-    on.exit(graphics::par(on_ex))
+    # on_ex <- graphics::par("mfrow","oma","mar")
+    # on.exit(graphics::par(on_ex))
     graphics::par(mfrow = c(1,1), oma = c(0,0,0,0), mar = c(0,0,0,0))
     graphics::plot(
       NULL,
@@ -371,14 +821,13 @@ elaborator_server <- function(input, output, session) {
 
       HTML('<button style="background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo_co">Open/Close</button>'),
       tags$div(id = 'demo_co',  class="collapse in",
-
-               shiny::fluidRow(
-                 shiny::column(2,
-                               shiny::plotOutput(
-                                 'legend'
-                               )
-                 )
-               )
+        shiny::fluidRow(
+          shiny::column(2,
+            shiny::plotOutput(
+              'legend'
+            )
+          )
+        )
 
       ),
       style = "z-index: 10;"
@@ -395,7 +844,7 @@ elaborator_server <- function(input, output, session) {
       fixed = TRUE,
       draggable = TRUE,
       HTML(paste0("<div style='background-color:", ColorBG, "'>")),
-      HTML('<button style="background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo2"> <i class="fa fa-search-plus"></i> Open/Close Zoom Panel</button>'),
+      HTML('<button style="background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo2"> <i class="fa-solid fa-search-plus"></i> Open/Close Zoom Panel</button>'),
       top = 70,
       left = "auto",
       right = 100,
@@ -405,44 +854,169 @@ elaborator_server <- function(input, output, session) {
       tags$div(id = 'demo2',
                class = "collapse",
                shiny::fluidRow(
-                 shiny::column(2,
-                               shiny::plotOutput(
-                                 'hover2'
-                               )
-                 )
-               )
+           shiny::column(2,
+             shiny::plotOutput('hover2')
+           )
+          ),
+          shiny::fluidRow(
+            shiny::column(12, offset = 4,
+              shiny::radioButtons(
+                inputId = "plot_option_switch2",
+                label = NULL,
+                choices = c("hover", "click"),
+                selected = c("hover"),
+                inline = TRUE
+              )
+            )
+          ),
+         shiny::fluidRow(
+           shiny::column(12,
+             uiOutput('hover_info_text2')
+           )
+         )
       ),
       style = "z-index: 10;"
     )
   })
 
+  output$hover_info_text2 <- shiny::renderUI({
+    input$apply_qual_plot
+    shiny::req(data_filtered_by_app_selection(), input$plot_option_switch2)
+
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch2 == "hover") {
+      plot_coords <- input$dist_hover2
+    } else if (input$plot_option_switch2 == "click") {
+      plot_coords <- input$dist_click2
+    }
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+      if (plot_coords$coords_css$y > 0  & plot_coords$coords_css$x > 0) {
+        y <- plot_coords$coords_css$y
+        x <- plot_coords$coords_css$x
+        if (!is.null(y) && !is.null(x)) {
+
+          dat <- shiny::isolate(data_with_only_non_missings_over_visits())
+          #dat <- shiny::isolate(data_with_selected_factor_levels())
+          # Mon Apr 15 12:49:57 2024 ------------------------------
+          sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
+          #sortin <- levels(dat$LBTESTCD)
+          # Mon Apr 15 12:50:08 2024 ------------------------------
+
+          val <- shiny::isolate(values$default)
+          hover_treatment <- dat %>%
+            dplyr::pull(TRTP) %>%
+            levels() %>%
+            .[ceiling(y / isolate(input$zoompx))]
+
+          hover_labparameter <- sortin[ceiling(x / isolate(input$zoompx))]
+          text <- elaborator_create_hover_info_text(
+            elab_data = data_with_missing_flag(),
+            labparameter = hover_labparameter,
+            treat = hover_treatment,
+            select.visit = input$select.visit
+          )
+
+          HTML(
+            text
+          )
+        }
+      }
+    } else {
+      HTML("")
+    }
+  })
+
+    output$hover_info_text3 <- shiny::renderUI({
+    input$apply_ref_plot
+    #shiny::req(shiny::isolate(data_with_missing_flag()), input$plot_option_switch3)
+  shiny::req(shiny::isolate(data_with_missing_flag()), input$plot_option_switch3)
+
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch3 == "hover") {
+      plot_coords <- input$dist_hover3
+    } else if (input$plot_option_switch3 == "click") {
+      plot_coords <- input$dist_click3
+    }
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+      if (plot_coords$coords_css$y > 0  & plot_coords$coords_css$x > 0) {
+        y <- plot_coords$coords_css$y
+        x <- plot_coords$coords_css$x
+        if (!is.null(y) && !is.null(x)) {
+          #dat <- shiny::isolate(data_with_missing_flag())
+          # dat <- shiny::isolate(data_filtered_by_app_selection())
+
+          dat <- shiny::isolate(data_with_only_non_missings_over_visits())
+          #dat <- shiny::isolate(data_with_selected_factor_levels())
+          # Mon Apr 15 12:50:20 2024 ------------------------------
+          sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
+          #sortin <- levels(dat$LBTESTCD)
+          val <- shiny::isolate(values$default)
+          hover_treatment <- dat %>%
+            dplyr::pull(TRTP) %>%
+            levels() %>%
+            .[ceiling(y / isolate(input$zoompx))]
+
+          hover_labparameter <- sortin[ceiling(x / isolate(input$zoompx))]
+
+          text <- elaborator_create_hover_info_text(
+            elab_data = data_with_missing_flag(),
+            labparameter = hover_labparameter,
+            treat = hover_treatment,
+            select.visit = input$select.visit
+          )
+
+          HTML(
+            text
+          )
+        }
+      }
+    } else {
+      HTML("")
+    }
+  })
+
+
+
   shiny::observe({
     output$hover2 <- shiny::renderPlot({
       input$apply_qual_plot
-      shiny::req(ds2(), input$dist_hover2, Summa())
-      if (input$dist_hover2$coords_css$y > 0 & input$dist_hover2$coords_css$x > 0) {
-        dat <- ds2()
-        Variab <- clust()
+      shiny::req(data_with_selected_factor_levels(), Summary_for_qualitative_trends(), input$plot_option_switch2)
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch2 == "hover") {
+      plot_coords <- input$dist_hover2
+    } else if (input$plot_option_switch2 == "click") {
+      plot_coords <- input$dist_click2
+    }
 
-        Variab <- Variab[Variab %in% isolate(input$select.lab)]
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+
+
+      if (plot_coords$coords_css$y > 0 & plot_coords$coords_css$x > 0) {
+
+        dat <- data_with_only_non_missings_over_visits()
+        Variab <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
+
         dat_filt <- dat %>%
           dplyr::filter(
             TRTP == dat %>%
               dplyr::pull(TRTP) %>%
               levels() %>%
-              .[ceiling(input$dist_hover2$coords_css$y / input$zoompx)],
-            PARAMCD == Variab[ceiling(input$dist_hover2$coords_css$x / input$zoompx)]
+              .[ceiling(plot_coords$coords_css$y / input$zoompx)],
+            LBTESTCD == Variab[ceiling(plot_coords$coords_css$x / input$zoompx)]
           )
 
         dat_filt$TRTP <- factor(dat_filt$TRTP)
 
-        Summa  <- Summa()
+        Summa  <- Summary_for_qualitative_trends()
 
         meth <- input$method
         suppressWarnings(
           elaborator_plot_qual_trends(
             dat1 = dat_filt,
-            Variab[ceiling(input$dist_hover2$coords_css$x / input$zoompx)],
+            Variab[ceiling(plot_coords$coords_css$x / input$zoompx)],
             fontsize = 2,
             method = meth,
             color_palette = c('white', colChoice[[shiny::req(input$select.pal1)]]$col, 'black'),
@@ -467,19 +1041,38 @@ elaborator_server <- function(input, output, session) {
           col = ColorBG,
           xpd = TRUE
         )
-        text(0.5, 0.6, "Please move your mouse over the plots", col = ColorFont)
+        text(0.5, 0.6, ifelse(input$plot_option_switch2 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
+        text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
+      }
+    } else {
+        plot(
+          NULL,
+          xlim = c(0, 1),
+          ylim = c(0, 1),
+          axes = FALSE,
+          xlab = "",
+          ylab = ""
+        )
+        rect(
+          xleft = grconvertX(0,'ndc','user'),
+          xright = grconvertX(1, 'ndc', 'user'),
+          ybottom = grconvertY(0,'ndc','user'),
+          ytop = grconvertY(1, 'ndc', 'user'),
+          border = NA,
+          col = ColorBG,
+          xpd = TRUE
+        )
+        text(0.5, 0.6, ifelse(input$plot_option_switch2 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
         text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
       }
     }, width = data_param()$nvisit * 100)
   })
 
   #### REFERENCE VALUE BASED PATTERN ####
-
-
   output$dendro_3 <- shiny::renderPlot({
-    shiny::req(pre_clust(), shiny::isolate(input$clusterMethod))
+    shiny::req(prepare_dist_matrix_for_clustering(), shiny::isolate(input$clusterMethod))
     if ((startsWith(shiny::isolate(input$clusterMethod), "OLO") | startsWith(shiny::isolate(input$clusterMethod), "GW"))) {
-      tmp <- pre_clust()
+      tmp <- prepare_dist_matrix_for_clustering()
       ser <- seriation::seriate(
         elaborator_calculate_spearman_distance(tmp),
         method = shiny::isolate(input$clusterMethod)
@@ -496,8 +1089,8 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      on_ex <- graphics::par(no.readonly = TRUE)
-      on.exit(graphics::par(on_ex))
+      # on_ex <- graphics::par(no.readonly = TRUE)
+      # on.exit(graphics::par(on_ex))
       graphics::par(bg = ColorBG)
       graphics::plot(dendro3, ylab = "Distance", horiz = FALSE)
     }
@@ -511,7 +1104,7 @@ elaborator_server <- function(input, output, session) {
       fixed = TRUE,
       draggable = TRUE,
       HTML(paste0("<div style='background-color:", ColorBG, "'>")),
-      HTML('<button style="background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo3"> <i class="fa fa-search-plus"></i> Open/Close Zoom Panel</button>'),
+      HTML('<button style="background: #f6ad82; color:#ffffff", data-toggle="collapse" data-target="#demo3"> <i class="fa-solid fa-search-plus"></i> Open/Close Zoom Panel</button>'),
       top = 70,
       left = "auto",
       right = 100,
@@ -522,10 +1115,26 @@ elaborator_server <- function(input, output, session) {
         id = 'demo3',
         class = "collapse",
         shiny::fluidRow(
-          shiny::column(2,
-                        shiny::plotOutput('hover3')
-          )
-        )
+           shiny::column(2,
+             shiny::plotOutput('hover3')
+           )
+          ),
+          shiny::fluidRow(
+            shiny::column(12, offset = 4,
+              shiny::radioButtons(
+                inputId = "plot_option_switch3",
+                label = NULL,
+                choices = c("hover", "click"),
+                selected = c("hover"),
+                inline = TRUE
+              )
+            )
+          ),
+         shiny::fluidRow(
+           shiny::column(12,
+             uiOutput('hover_info_text3')
+           )
+         )
       ),
       style = "z-index: 10;"
     )
@@ -533,23 +1142,38 @@ elaborator_server <- function(input, output, session) {
 
   output$hover3 <- shiny::renderPlot({
     input$apply_ref_plot
-    shiny::req(ds2(), input$dist_hover3, input$abnormal_values_factor)
-    if (input$dist_hover3$coords_css$y > 0 & input$dist_hover3$coords_css$x > 0
+    shiny::req(data_with_selected_factor_levels(), input$abnormal_values_factor, input$plot_option_switch3)
+
+    # switch between hover or click options for zoom panel
+    if (input$plot_option_switch3 == "hover") {
+      plot_coords <- input$dist_hover3
+    } else if (input$plot_option_switch3 == "click") {
+      plot_coords <- input$dist_click3
+    }
+
+    if (!is.null(plot_coords$coords_css$y) & !is.null(plot_coords$coords_css$x)) {
+
+
+      if (plot_coords$coords_css$y > 0 & plot_coords$coords_css$x > 0
         & !is.na(input$abnormal_values_factor) & input$abnormal_values_factor >=0) {
-      dat <- ds2()
+
+
+      # Thu Sep 28 07:38:41 2023 ------------------------------
+      dat <- data_with_only_non_missings_over_visits()
+      #dat <- data_with_selected_factor_levels()
+
 
       dat <-  subset(dat,!(dat$LBORNRLO == "" & dat$LBORNRHI == ""))
 
-      dat$PARAMCD <- factor(dat$PARAMCD)
+      dat$LBTESTCD <- factor(dat$LBTESTCD)
 
-      sorti <- clust()
-      sorti <- sorti[sorti %in% levels(dat$PARAMCD)]
+      sorti <- levels(dat$LBTESTCD)
 
       dat_filt <- dat %>%
         dplyr::filter(TRTP == dat %>%
                         dplyr::pull(TRTP) %>%
                         levels() %>%
-                        .[ceiling(input$dist_hover3$coords_css$y / input$zoompx)], PARAMCD == sorti[ceiling(input$dist_hover3$coords_css$x / input$zoompx)])
+                        .[ceiling(plot_coords$coords_css$y / input$zoompx)], LBTESTCD == sorti[ceiling(plot_coords$coords_css$x / input$zoompx)])
       dat_filt$TRTP <- factor(dat_filt$TRTP)
 
       cex <- shiny::isolate(input$cex.rvbp)
@@ -559,7 +1183,7 @@ elaborator_server <- function(input, output, session) {
         data = dat_filt,
         fontsize = 2,
         criterion = crit,
-        sorting_vector = sorti[ceiling(input$dist_hover3$coords_css$x / input$zoompx)],
+        sorting_vector = sorti[ceiling(plot_coords$coords_css$x / input$zoompx)],
         abnormal_value_factor = shiny::isolate(input$abnormal_values_factor)
       )
 
@@ -581,25 +1205,32 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      text(0.5, 0.6, "Please move your mouse over the plots", col = ColorFont)
+      text(0.5, 0.6, ifelse(input$plot_option_switch3 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
       text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
     }
-  }, width = 400)
+    } else {
+      plot(
+        NULL,
+        xlim = c(0, 1),
+        ylim = c(0, 1),
+        axes = FALSE,
+        xlab = "",
+        ylab = ""
+      )
+      rect(
+        xleft = grconvertX(0, 'ndc', 'user'),
+        xright = grconvertX(1, 'ndc', 'user'),
+        ybottom = grconvertY(0, 'ndc', 'user'),
+        ytop = grconvertY(1, 'ndc', 'user'),
+        border = NA,
+        col = ColorBG,
+        xpd = TRUE
+      )
+      text(0.5, 0.6, ifelse(input$plot_option_switch3 == "hover", "Please move your mouse over the plots", "Please click on the plots"), col = ColorFont)
+      text(0.5, 0.4, "to get an enlarged version of the plot!", col = ColorFont)
 
-  output$orderinglab <- shiny::renderUI({
-    shiny::req(ds2())
-    shinyWidgets::prettyRadioButtons(
-      inputId = "orderinglab",
-      label = "",
-      choices = c(
-        "As in input" = "asinp",
-        "AI sorted" = "auto",
-        "Alphabetically" = "alphabetically"
-      ),
-      selected = orderinglab$val,
-      status = "warning"
-    )
-  })
+    }
+  }, width = 400)
 
   output$prev.pal1 <- shiny::renderPlot({
     col <- c('white', colChoice[[shiny::req(input$select.pal1)]]$col, 'black')
@@ -616,6 +1247,10 @@ elaborator_server <- function(input, output, session) {
   start.ai <- shiny::reactiveValues(dat = FALSE)
 
   method <- shiny::reactiveValues(val = "InQuRa")
+
+
+  # new version of values$default
+  statistical_test_results <- shiny::reactiveValues(var = NULL)
 
   values <- shiny::reactiveValues(default = 0)
 
@@ -634,286 +1269,32 @@ elaborator_server <- function(input, output, session) {
 
   shiny::outputOptions(output, 'check', suspendWhenHidden = FALSE)
 
-  df <- shiny::reactive({
-    input$impswitch
-    # need a non-empty data path
-    if (!is.null(input$file$datapath) || !is.null(input$csv_file$datapath)) {
-
-      required_elaborator_vars <- c("SUBJIDN", "AVISIT", "TRTP", "LBTESTCD", "LBORRES", "LBORNRLO", "LBORNRHI")
-
-      if (input$impswitch == '*.RData file') {
-
-        if (!is.null(input$file$datapath)) {
-          # error message if selected data have a different format than rdata
-          if (utils::tail(strsplit(input$file$datapath, ".", fixed = TRUE)[[1]], n = 1) != "RData") {
-            elaborator_data <- NULL
-            error_message <- paste0(
-              "Wrong data format. <br> You have selected a ",
-              utils::tail(strsplit(input$file$datapath, ".", fixed = TRUE)[[1]], n = 1),
-              " file. <br> Please select a .RData file <br> or choose another file format."
-            )
-            return(
-              list(
-                data = elaborator_data,
-                message = error_message
-              )
-            )
-          } else {
-            elaborator_data <- get(load(input$file$datapath))
-
-            # error message if required variables are missing
-            if (!all(required_elaborator_vars %in% names(elaborator_data))) {
-              error_message <- paste0("The following required variable(s) <br> is/are missing: <br>",
-                                      paste(required_elaborator_vars[which(!required_elaborator_vars %in% names(elaborator_data))], collapse = ", "),
-                                      ".<br> Please check the data manual <br> for further information."
-              )
-              elaborator_data <- NULL
-            } else {
-              elaborator_data$LBTESTCD <- as.factor(elaborator_data$LBTESTCD)
-              if ("SUBJIDN" %in% names(elaborator_data) && !("SUBJID" %in% names(elaborator_data))) {
-                elaborator_data$SUBJID <- as.character(elaborator_data$SUBJIDN)
-              }
-              if ("SUBJID" %in% names(elaborator_data) && !("SUBJIDN" %in% names(elaborator_data))) {
-                elaborator_data$SUBJIDN <- as.numeric(elaborator_data$SUBJID)
-              }
-              error_message <- NULL
-            }
-          }
-        } else {
-          elaborator_data <- NULL
-          error_message <- NULL
-        }
-      } else if (input$impswitch == '*.CSV file') {
-
-        if (!is.null(input$csv_file$datapath)) {
-          # error message if selected data have a different format than csv
-          if (utils::tail(strsplit(input$csv_file$datapath, ".", fixed = TRUE)[[1]], n = 1) != "csv") {
-            elaborator_data <- NULL
-            error_message <- paste0(
-              "Wrong data format. <br> You have selected a ",
-              utils::tail(strsplit(input$csv_file$datapath, ".", fixed = TRUE)[[1]], n = 1),
-              " file. <br> Please select a .csv file <br> or choose another file format."
-            )
-          } else {
-            elaborator_data <- utils::read.csv(
-              input$csv_file$datapath,
-              row.names = NULL,
-              header = TRUE,
-              na.strings = c('NA','.',''),
-              sep = input$sep,
-              quote = input$quote,
-              dec = input$dec
-            )
-
-            if ("LBORRES" %in% names(elaborator_data)) {
-              if (!is.numeric(elaborator_data$LBORRES)) {
-                elaborator_data <- NULL
-                error_message <- "Non numeric lab parameter. <br> Select another decimal character!"
-                return(list(data = elaborator_data,
-                            message = error_message))
-              }
-            }
-            # error message if required variables are missing
-            if (!all(required_elaborator_vars %in% names(elaborator_data))) {
-
-              if (all(required_elaborator_vars %in% (strsplit(names(elaborator_data), ".", fixed = TRUE)[[1]]))) {
-                error_message <- paste0(
-                  "Please change separator and/or quote <br> input as in csv data set. <br>",
-                  "For further information <br> check the data manual."
-                )
-                elaborator_data <- NULL
-              } else {
-                error_message <- paste0("The following required variable(s) <br> is/are missing: <br>",
-                                        paste(required_elaborator_vars[which(!required_elaborator_vars %in% names(elaborator_data))], collapse = ", <br>"),
-                                        ". <br> Try to change separator and/or quoute <br> input as in csv data set.
-              <br> For further information <br> check the data manual."
-                )
-                elaborator_data <- NULL
-              }
-            } else {
-
-              if("LBORNRHI" %in% colnames(elaborator_data)) {
-                elaborator_data$LBORNRHI <- as.character(elaborator_data$LBORNRHI)
-                elaborator_data$LBORNRLO <- as.character(elaborator_data$LBORNRLO)
-                elaborator_data$LBTESTCD <- as.factor(elaborator_data$LBTESTCD)
-                if ("SUBJIDN" %in% names(elaborator_data) && !("SUBJID" %in% names(elaborator_data))) {
-                  elaborator_data$SUBJID <- as.character(elaborator_data$SUBJIDN)
-                }
-                if ("SUBJID" %in% names(elaborator_data) && !("SUBJIDN" %in% names(elaborator_data))) {
-                  elaborator_data$SUBJIDN <- as.numeric(elaborator_data$SUBJID)
-                }
-                error_message <- NULL
-              } else {
-                elaborator_data <- NULL
-              }
-            }
-            elaborator_data
-          }
-        } else {
-          elaborator_data <- NULL
-          error_message <- NULL
-        }
-      }
-    } else {
-      elaborator_data <- NULL
-      error_message <- NULL
-    }
-    list(data = elaborator_data,
-         message = error_message
-    )
+  #currently not in use:
+  app_input <- shiny::reactive({
+    NULL
   })
 
 
-  output$err_message <- renderText({
-    if(!is.null(df()$message)) {
-      str1 <- df()$message
-      paste(str1)
-    }
-  })
-
-  ds <- shiny::reactive({
-    shiny::req(df()$data, input$select.toleratedPercentage)
-    dat1 <- df()$data
-    tolPerc <- input$select.toleratedPercentage
-    shiny::withProgress(message = 'removing empty groups ...', value = 0, {
-      shiny::incProgress(0, detail = paste(""))
-      nest_dat1 <- dat1 %>%
-        dplyr::group_by(AVISIT, TRTP, LBTESTCD) %>%
-        tidyr::nest_legacy()
-
-      shiny::incProgress(0.09, detail = paste(""))
-
-      nonmissing <- unlist(
-        lapply(
-          nest_dat1 %>%
-            pull(data),
-          function(x){sum(!is.na(x$LBORRES))}
-        )
-      )
-
-      shiny::incProgress(0.11, detail = paste(""))
-
-      nonMissingVisits <- cbind(
-        nest_dat1 %>%
-          select(-data),
-        nonmissing
-      )
-
-      shiny::incProgress(0.13, detail = paste(""))
-
-      tmp1.2 <- dat1 %>%
-        dplyr::select(SUBJIDN,TRTP) %>%
-        dplyr::distinct() %>%
-        dplyr::group_by(TRTP) %>%
-        dplyr::summarise(tot = n()) %>%
-        dplyr::full_join(dat1, by ="TRTP") %>%
-        dplyr::full_join(
-          nonMissingVisits,
-          by = c("AVISIT","TRTP","LBTESTCD")
-        ) %>%
-        dplyr::mutate(percentage = nonmissing/tot)
-
-      shiny::incProgress(0.15, detail = paste(""))
-
-      tmp2.2 <- tmp1.2 %>%
-        dplyr::group_by(AVISIT, LBTESTCD) %>%
-        dplyr::summarise(tr = min(percentage))
-
-      tmp3.2 <- tmp2.2 %>%
-        dplyr::full_join(tmp1.2, by = c("AVISIT","LBTESTCD")) %>%
-        dplyr::filter(tr >= tolPerc) %>%
-        dplyr::select(colnames(dat1)) %>%
-        dplyr::ungroup()
-
-      tmp3.2 <- tmp3.2 %>%
-        dplyr::mutate(LBTESTCD = forcats::fct_explicit_na(LBTESTCD, "NA"))
-
-      countVisits.2 <- tmp3.2 %>%
-        dplyr::group_by(LBTESTCD) %>%
-        dplyr::group_modify(~ data.frame(nr_visits = length(unique(.x$AVISIT))))
-
-      shiny::incProgress(0.19, detail = paste(""))
-
-      tmp3.2_gb <- tmp3.2 %>%
-        dplyr::group_by(SUBJIDN, LBTESTCD) %>%
-        tidyr::nest_legacy()
-
-      shiny::incProgress(0.95, detail = paste(""))
-
-      nonmiss <- unlist(
-        lapply(
-          tmp3.2_gb %>%
-            dplyr::pull(data),
-          function(x){sum(!is.na(x$LBORRES))}
-        )
-      )
-
-      nonMissing.2 <- cbind(tmp3.2_gb %>%
-                              dplyr::select(SUBJIDN, LBTESTCD), nonmiss)
-
-      shiny::incProgress(0.99, detail = paste(""))
-
-      res.2 <- nonMissing.2 %>%
-        dplyr::full_join(countVisits.2, by = c("LBTESTCD")) %>%
-        dplyr::filter(nr_visits == nonmiss) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(SUBJIDN, LBTESTCD)
-
-      shiny::incProgress(0, detail = paste("done!"))
-    })
-    as.data.frame(
-      tmp1.2 %>%
-        dplyr::right_join(res.2, by = c("SUBJIDN","LBTESTCD")) %>%
-        dplyr::select(colnames(tmp3.2))
-    )
-  })
-
-
-  ds2 <- shiny::reactive({
-    shiny::req(input$select.treatments, input$select.lab, input$select.visit, ds(), df()$data)
-    df <- ds()
-
-    choices.trt <- input$select.treatments
-    choices.lab <- input$select.lab
-    choices.visit <- input$select.visit
-    ds <- df %>%
-      dplyr::filter(LBTESTCD %in% c(choices.lab) & TRTP %in% c(choices.trt) & AVISIT %in% c(choices.visit))
-    if(dim(ds)[1] > 0) {
-      ds$AVISIT <- factor(ds$AVISIT)
-
-      if(shiny::isolate(input$orderinglab) == "asinp") {
-        ds$LBTESTCD <- factor(ds$LBTESTCD,levels = unique((ds$LBTESTCD)))
-        ds$PARAMCD <- factor(ds$LBTESTCD,levels = unique((ds$LBTESTCD)))
-      } else if (shiny::isolate(input$orderinglab) =="alphabetically"){
-        ds$LBTESTCD <- factor(ds$LBTESTCD,levels = sort(levels(ds$LBTESTCD)))
-        ds$PARAMCD <- factor(ds$LBTESTCD,levels = sort(levels(ds$LBTESTCD)))
-      } else if (shiny::isolate(input$orderinglab) =="auto"){
-        ds$LBTESTCD <- factor(ds$LBTESTCD,levels = levels(ds$LBTESTCD))
-        ds$PARAMCD <- factor(ds$LBTESTCD,levels = levels(ds$LBTESTCD))
-      }
-      ds$TRTP <- factor((ds$TRTP))
-      ds$TRTP <- ds$TRTP %>%
-        forcats::fct_relevel(input$select.treatments)
-      ds$AVISIT <- ds$AVISIT %>%
-        forcats::fct_relevel(input$select.visit)
-      ds
-    }
-  })
 
   data_param <- shiny::reactive({
-    shiny::req(ds2())
-    ntreat <- length(unique(ds2()$TRTP))
-    nvisit <- length(unique(ds2()$AVISIT))
-    nlab <- length(unique(ds2()$PARAMCD))
-    tmp <- ds2()
+    shiny::req(data_with_selected_factor_levels())
+    ntreat <- length(unique(data_with_selected_factor_levels()$TRTP))
+    nvisit <- length(unique(data_with_selected_factor_levels()$AVISIT))
+    nlab <- length(unique(data_with_selected_factor_levels()$LBTESTCD))
+    tmp <- data_with_selected_factor_levels()
     tmp <- subset(tmp,!(tmp$LBORNRLO == "" & tmp$LBORNRHI == ""))
-    nlab2 <- length(unique(tmp$PARAMCD))
-    list(ntreat = ntreat, nvisit = nvisit, nlab = nlab, nlab2 = nlab2)
+    nlab2 <- length(unique(tmp$LBTESTCD))
+    list(
+      ntreat = ntreat,
+      nvisit = nvisit,
+      nlab = nlab,
+      nlab2 = nlab2
+    )
   })
 
-  Summa <-  shiny::reactive({
-    shiny::req(ds2(), input$percent)
-    dat1 <- ds2()
+  Summary_for_qualitative_trends <-  shiny::reactive({
+    shiny::req(data_with_selected_factor_levels(), input$percent)
+    dat1 <- data_with_selected_factor_levels()
 
     percent <- input$percent/100
     firstVisit <- dat1 %>%
@@ -923,13 +1304,13 @@ elaborator_server <- function(input, output, session) {
     Yall <- dat1 %>%
       tidyr::spread(AVISIT,LBORRES) %>%
       dplyr::select(
-        c(PARAMCD, LBORNRLO, LBORNRHI,
+        c(LBTESTCD, LBORNRLO, LBORNRHI,
           SUBJIDN, TRTP, LBTESTCD, firstVisit
         )
       )
     lowquant <- highquant <- NULL
     Summa <- Yall %>%
-      dplyr::group_by(PARAMCD) %>%
+      dplyr::group_by(LBTESTCD) %>%
       dplyr::summarise(
         lowquant = stats::quantile(!!rlang::sym(firstVisit), na.rm = TRUE, probs = 0.25),
         highquant = stats::quantile(!!rlang::sym(firstVisit), na.rm = TRUE, probs = 0.75),
@@ -943,14 +1324,14 @@ elaborator_server <- function(input, output, session) {
         Range = percent * (max - min),
         refRange = percent * (highref - lowref)
       ) %>%
-      dplyr::select(PARAMCD, InQuRa, Range, refRange) %>%
-      dplyr::rename(variable = PARAMCD)
+      dplyr::select(LBTESTCD, InQuRa, Range, refRange) %>%
+      dplyr::rename(variable = LBTESTCD)
     Summa
   })
 
   trtcompar_val <- shiny::reactive({
-    shiny::req(ds2())
-    choices  <- as.character(unique(ds2()$AVISIT))
+    shiny::req(data_with_selected_factor_levels())
+    choices  <- as.character(unique(data_with_selected_factor_levels()$AVISIT))
     choices
   })
 
@@ -961,7 +1342,7 @@ elaborator_server <- function(input, output, session) {
 
   box_col <- shiny::eventReactive(input$go, {
     shiny::req(input$select.visit)
-    visits <- input$select.visit
+    visits <- input$select.xvisit
     selected <- input$trtcompar
     b.col <- c(
       input$'id1-col', input$'id2-col', input$'id3-col', input$'id4-col', input$'id5-col', input$'id6-col',
@@ -980,90 +1361,6 @@ elaborator_server <- function(input, output, session) {
     if ({input$stattest != "none"})
       b.col[!(visits %in% selected)] <- elaborator_transform_transparent(b.col[!(visits %in% selected)], 70)
     b.col
-  })
-
-  pre_clust <- shiny::eventReactive(c(input$go3, ds2()), {
-    shiny::req(ds2())
-    ds <- ds2()
-    if (shiny::isolate(input$orderinglab) == "auto") {
-      first <- shiny::isolate(input$select.ai.first)
-      last <- shiny::isolate(input$select.ai.last)
-
-      shiny::validate(
-        shiny::need(first != last, "Please select different Timepoints for Seriation! The first timepoint must differ from second timepoint.")
-      )
-
-      shiny::validate(
-        shiny::need(sum(ds$AVISIT == first) == sum(ds$AVISIT == last), "The selected timepoints have a different number of observations! Please use other timepoints or try to adjust the percentage of tolerated missing values.")
-      )
-
-      if (length(unique(ds$PARAMCD)) > 1 && length(unique(ds$AVISIT)) > 1) {
-        ds_tmp <- ds %>%
-          dplyr::group_by(PARAMCD,TRTP) %>%
-          dplyr::summarise(median_value = median(LBORRES,na.rm = TRUE)) %>%
-          dplyr::ungroup(PARAMCD,TRTP)
-
-        ds2 <- ds %>%
-          right_join(ds_tmp, by = c('PARAMCD','TRTP'))
-
-        ds <- ds2 %>%
-          dplyr::mutate(LBORRES = ifelse(is.na(LBORRES), median_value, LBORRES))
-
-        ds_new <- ds %>%
-          dplyr::group_by(SUBJIDN, PARAMCD) %>%
-          dplyr::mutate(n = n())
-
-        ds_new <- ds_new %>%
-          dplyr::arrange(SUBJIDN, PARAMCD, AVISIT) %>%
-          dplyr::filter(AVISIT %in% c(first,last))
-
-        ds_new$LBORRES_diff <- c(0, diff(ds_new$LBORRES))
-        ds_new_test <- ds_new %>%
-          dplyr::mutate(LBORRES_diff = ifelse(AVISIT == first, 0 , LBORRES_diff))
-
-        tmp <- ds_new_test %>%
-          dplyr::select(PARAMCD, AVISIT, SUBJIDN, LBORRES_diff) %>%
-          dplyr::filter(AVISIT == last) %>%
-          tidyr::spread(key = PARAMCD, value = LBORRES_diff) %>%
-          dplyr::mutate(vari = paste0(SUBJIDN, "_", AVISIT)) %>%
-          dplyr::select(-dplyr::one_of(c("SUBJIDN","AVISIT"))) %>%
-          dplyr::ungroup(SUBJIDN)
-
-        tmp_nam <- tmp %>%
-          dplyr::select(vari)
-        tmp2 <- tmp %>%
-          ungroup() %>%
-          dplyr::select(-vari,-SUBJIDN) %>%
-          t()
-        colnames(tmp2) <- t(tmp_nam$vari)
-
-        tmp2
-      }
-    } else {
-      NULL
-    }
-  })
-
-  clust <- shiny::eventReactive(c(input$go3, ds2()), {
-    shiny::req(ds2())
-    tmp2 <- pre_clust()
-    ds <- ds2()
-    if (input$orderinglab == "asinp") {
-      as.character(unique(ds$PARAMCD))
-    }
-    else if (input$orderinglab == "alphabetically") {
-      sort(as.character(unique(ds$PARAMCD)))}
-    else if (input$orderinglab == "auto") {
-
-      shiny::req(pre_clust())
-      tmp2 %>%
-        elaborator_calculate_spearman_distance() %>%
-        seriation::seriate(method = input$clusterMethod) %>%
-        seriation::get_order() %>%
-        rownames(tmp2)[.]
-    } else {
-      as.character(unique(ds$PARAMCD))
-    }
   })
 
   border.col <-shiny::eventReactive(c(input$go_select2), {
@@ -1122,24 +1419,26 @@ elaborator_server <- function(input, output, session) {
 
   shiny::observeEvent(input$apply_ref_plot, {
     if (input$apply_ref_plot >= 1) {
+
       output$inoutPlot <- shiny::renderPlot({
-        dat <- shiny::isolate(ds2())
+
+        dat <- shiny::isolate(data_with_only_non_missings_over_visits())
+        #dat <- shiny::isolate(data_with_selected_factor_levels())
 
         dat <- subset(dat,!(dat$LBORNRLO == "" & dat$LBORNRHI == ""))
 
-        dat$PARAMCD <- dat$PARAMCD %>%
-          factor()
-
         cex <- shiny::isolate(input$cex.rvbp)
         crit <- shiny::isolate(input$criterion)
-        sorti <- shiny::isolate(clust())
-        sorti <- sorti[sorti %in% levels(dat$PARAMCD)]
+
+        test_dat <<- dat
+        test_crit <- crit
+        test_abnormal <<- shiny::isolate(input$abnormal_values_factor)
 
         elaborator_plot_ref_pattern(
           data = dat,
           fontsize = cex,
           criterion = crit,
-          sorting_vector = sorti,
+          sorting_vector = levels(dat$LBTESTCD),
           abnormal_value_factor = shiny::isolate(input$abnormal_values_factor)
         )
       }, res = input$zoompx / 3)
@@ -1151,31 +1450,52 @@ elaborator_server <- function(input, output, session) {
 
         wpx <- data_param()$nlab2
         zoompx <- input$zoompx
-        panelheight <- input$panelheight
+        # panelheight <- input$panelheight
+        panelheight <- shiny::isolate(input$panelheight)
 
         shiny::wellPanel(style = paste0("background: ", ColorBG, ";overflow-x:scroll; max-height:", panelheight, "px"),
-                         shiny::plotOutput(
-                           outputId = 'inoutPlot',
-                           height = paste0(hpx * zoompx, 'px'),
-                           width = paste0(wpx * zoompx, 'px'),
-                           hover = clickOpts("dist_hover3", clip = FALSE)
-                         )
+           shiny::plotOutput(
+           outputId = 'inoutPlot',
+           height = paste0(hpx * zoompx, 'px'),
+           width = paste0(wpx * zoompx, 'px'),
+           hover = clickOpts(
+             "dist_hover3",
+             clip = FALSE
+           ),
+           click = clickOpts(
+             "dist_click3",
+             clip = FALSE
+           )
+          )
         )
       })
     }
   })
 
+
   shiny::observeEvent(input$apply_qual_plot, {
-    shiny::req(isolate(ds2()))
+    #requirements
+    shiny::req(isolate(data_with_selected_factor_levels()))
     if(input$apply_qual_plot > 0) {
+      #output of Qualitative trend plots
       output$trendPlot <- shiny::renderPlot({
-        shiny::req(isolate(Summa()))
-        dat <- shiny::isolate(ds2())
+        shiny::req(isolate(Summary_for_qualitative_trends()))
+
+        # Thu Sep 28 07:37:18 2023 ------------------------------
+        dat <- shiny::isolate(data_with_only_non_missings_over_visits())
+        #dat <- shiny::isolate(data_with_selected_factor_levels())
+
         cex <- shiny::isolate(input$cex.trend)
-        Variab <- shiny::isolate(clust())
-        Variab <- Variab[Variab %in% shiny::isolate(input$select.lab)]
+        # Thu Sep 28 09:51:29 2023 ------------------------------
+        Variab <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
+
+        # Variab <- unique(dat$LBTESTCD)
+        #Variab <- levels(dat$LBTESTCD)
+        # Thu Sep 28 09:53:54 2023 ------------------------------
+
+
         meth <- shiny::isolate(input$method)
-        Summa  <- shiny::isolate(Summa())
+        Summa  <- shiny::isolate(Summary_for_qualitative_trends())
         elaborator_plot_qual_trends(
           dat1 = dat,
           Variab,
@@ -1200,44 +1520,66 @@ elaborator_server <- function(input, output, session) {
             outputId = 'trendPlot',
             height = paste0(hpx * zoompx, 'px'),
             width = paste0(wpx * zoompx, 'px'),
-            hover = clickOpts("dist_hover2", clip = FALSE)
+            hover = clickOpts(
+               "dist_hover2",
+               clip = FALSE
+             ),
+             click = clickOpts("dist_click2",
+               clip = FALSE
+             )
           )
         )
       })
     }
   })
 
-
-  #### Picker/Selectize Inputs ####
-  shiny::observeEvent(df()$data, {
-
-    if (is.factor(df()$data$LBTESTCD)) {
-      choices_sel_lab <- levels(df()$data$LBTESTCD)
+  shiny::observeEvent(input$select.lab, {
+    if(length(input$select.lab) <= length(input$arrange.lab)) {
+      tmp <- input$arrange.lab[input$arrange.lab %in% input$select.lab]
     } else {
-      choices_sel_lab <- unique(df()$data$LBTESTCD)
+      tmp <- c(input$arrange.lab, input$select.lab[!input$select.lab %in% input$arrange.lab])
     }
+    shiny::updateSelectizeInput(
+      session,
+      inputId = "arrange.lab",
+      choices = tmp,
+      selected = tmp
+    )
+  })
+  #### Picker/Selectize Inputs ####
+
+  ### bug fix filter update
+
+  shiny::observeEvent(filtered_raw_data(), {
+
+    choices_sel_lab <- unique(filtered_raw_data()$LBTESTCD)
     shinyWidgets::updatePickerInput(
       session,
       inputId = "select.lab",
       choices = choices_sel_lab,
       selected = choices_sel_lab
     )
-    if (is.factor(df()$data$AVISIT)) {
-      choices_sel_visit <- levels(df()$data$AVISIT)
-    } else {
-      choices_sel_visit <- unique(df()$data$AVISIT)
-    }
+
+    choices_sel_visit <- unique(filtered_raw_data()$AVISIT)
+
     shiny::updateSelectizeInput(
       session,
       inputId = "select.visit",
       choices = choices_sel_visit,
       selected = choices_sel_visit
     )
-    if (is.factor(df()$data$TRTP)) {
-      choices_sel_treatments <- levels(df()$data$TRTP)
-    } else {
-      choices_sel_treatments <- unique(df()$data$TRTP)
-    }
+
+    choices_sel_lab <- unique(filtered_raw_data()$LBTESTCD)
+
+    shiny::updateSelectizeInput(
+      session,
+      inputId = "arrange.lab",
+      choices = choices_sel_lab,
+      selected = choices_sel_lab
+    )
+
+    choices_sel_treatments <- unique(filtered_raw_data()$TRTP)
+
     shiny::updateSelectizeInput(
       session,
       inputId = "select.treatments",
@@ -1245,6 +1587,19 @@ elaborator_server <- function(input, output, session) {
       selected = choices_sel_treatments
     )
   })
+
+ shiny::observeEvent(input$con_lin_options, {
+   if (input$con_lin_options == 'custom_visits') {
+    choices  <- input$select.visit
+    selected <- c(choices[1], choices[length(choices)])
+    shiny::updateCheckboxGroupInput(
+      session,
+      inputId = "custom_visits",
+      choices = choices,
+      selected = selected
+    )
+   }
+ })
 
   shiny::observeEvent(input$select.visit, {
     choices  <- input$select.visit
@@ -1269,67 +1624,78 @@ elaborator_server <- function(input, output, session) {
     )
   })
 
+  #### QUALITATIVE TREND ####
+  #### output of Qualitative trend plots ###
+  # update when Update/Create button is clicked
+
   shiny::observeEvent(input$apply_quant_plot, {
-    shiny::req(ds2())
-    if (input$apply_quant_plot > 0) {
+    # requirements
+    shiny::req(data_with_selected_factor_levels())
+    # button need to be clicked at least once
+    if (shiny::isolate(input$apply_quant_plot) > 0) {
+      #select data  with non-missings for all visits
+      dat <- shiny::isolate(data_with_only_non_missings_over_visits())
+
+      #load statistical test values (saved in values$default)
+      val <- shiny::isolate(values$default)
+      if (!is.list(val)) {
+        info <- NA
+      } else {
+        info <- shiny::isolate(values$default)
+      }
+      #replace values$default with newer version
+      #load statistical test values (saved in statistical_test_resulst$var)
+
+      if (shiny::isolate(input$go) != 0) {
+        b.col <- shiny::isolate(box_col())
+      } else {
+        b.col <- c(colBoxplot2, colBoxplot2, colBoxplot2, colBoxplot2)
+      }
+      if (shiny::isolate(input$stattest) != "none") {
+        bordcol <- shiny::isolate(border.col())
+      } else {
+        bordcol <- NULL
+      }
+      #renderPlot created by elablorator_plot_quant_trends()-function
+
       output$compl <- shiny::renderPlot({
-        dat <- shiny::isolate(ds2())
-        val <- shiny::isolate(values$default)
-        if (!is.list(val)) {
-          info <- NA
-        } else {
-          info <- shiny::isolate(values$default)
-        }
-        cho <- shiny::isolate(input$trtcompar)
-        signtest2 <- shiny::isolate(input$stattest)
-        if (signtest2 == "signtest") {
-          signtest <- TRUE
-        } else {
-          signtest <- FALSE
-        }
-        sortpoint <- shiny::isolate(input$sortpoint)
-        labelvis <- NULL
-        sameax <- shiny::isolate(input$sameaxes)
-
-        pval <- shiny::isolate(input$pcutoff)
-
-        if (input$go != 0) {
-          b.col <- shiny::isolate(box_col())
-        } else {
-          b.col <- c(colBoxplot2, colBoxplot2, colBoxplot2, colBoxplot2)
-        }
-        if (signtest2 != "none") {
-          bordcol <- shiny::isolate(border.col())
-        } else {
-          bordcol <- NULL
-        }
-        sortin <- shiny::isolate(clust())
-
-        sortin <- sortin[sortin %in% isolate(input$select.lab)]
-        con_lin <- shiny::isolate(input$con_lin)
-
-        add_points <- shiny::isolate(input$add_points)
-
-        elaborator_plot_quant_trends(
-          dat1 = dat,
-          signtest = signtest,
-          Visit1 = cho[1],
-          Visit2 = cho[-1],
-          labcolumn = "PARAMCD",
+        elaborator_plot_quant_trends2(
+          shiny::isolate(data_with_only_non_missings_over_visits()),
+          signtest = ifelse(shiny::isolate(input$stattest) == "signtest", TRUE, FALSE),
+          Visit1 = shiny::isolate(input$trtcompar)[1],
+          Visit2 = shiny::isolate(input$trtcompar)[-1],
+          labcolumn = "LBTESTCD",
           cols = b.col,
-          pcutoff = pval,
-          sameaxes = sameax,
-          sortpoints = sortpoint,
-          labelvis = labelvis,
-          cexoutliers = 0.5,
-          infotest = info,
-          sortinput = sortin,
+          pcutoff = shiny::isolate(input$pcutoff),
+          sameaxes = shiny::isolate(input$sameaxes),
+          sortpoints = shiny::isolate(input$sortpoint),
+          labelvis = NULL,
+          infotest = shiny::isolate(statistical_test_results$var),
+          sortinput = levels(shiny::isolate(dat$LBTESTCD)),
           bordercol = bordcol,
-          add_points = add_points,
-          connect_lines = con_lin
+          add_points = shiny::isolate(input$add_points),
+          connect_lines = shiny::isolate(input$con_lin),
+          lin_data = lines_data,
+          outliers = shiny::isolate(input$outlier),
+          tolerated_percentage = shiny::isolate(input$select.toleratedPercentage),
+          color_lines_options = shiny::isolate(input$con_lin_options),
+          custom_visits = shiny::isolate(input$custom_visits)
         )
-      }, res = isolate(input$zoompx) / 3
+      }, res = shiny::isolate(input$zoompx) / 3
       )
+
+      if(input$con_lin){
+       lines_data <- shiny::isolate(quant_plot_data_lines())
+      } else {
+        lines_data <- NULL
+      }
+
+      #Create a plot as y-label for graph
+      output$treatment_label_panel <- shiny::renderPlot({
+        elaborator_plot_quant_trends_treatment_label(
+          dat1 = dat
+        )
+      })
 
       output$tab1 <- shiny::renderUI({
         shiny::req(isolate(data_param()))
@@ -1337,16 +1703,23 @@ elaborator_server <- function(input, output, session) {
         wpx <- shiny::isolate(data_param()$nlab)
         zoompx <- shiny::isolate(input$zoompx)
         panelheight <- shiny::isolate(input$panelheight)
-        shiny::wellPanel(style = paste0("background: ", ColorBG, ";overflow-x:scroll; max-height:", panelheight,"px"),
-                         shiny::plotOutput(
-                           outputId = 'compl',
-                           height = paste0(hpx * zoompx,'px'),
-                           width = paste0(wpx * zoompx, 'px'),
-                           hover = clickOpts(
-                             "dist_hover",
-                             clip = FALSE
-                           )
-                         )
+        shiny::fluidRow(
+          shiny::column(12,
+            shiny::wellPanel(style = paste0("background: ", ColorBG, ";overflow-x:scroll; max-height:", panelheight,"px"),
+              shiny::plotOutput(
+               outputId = 'compl',
+               height = paste0(hpx * zoompx,'px'),
+               width = paste0(wpx * zoompx, 'px'),
+               hover = clickOpts(
+                 "dist_hover",
+                 clip = FALSE
+               ),
+               click = clickOpts("dist_click",
+                 clip = FALSE
+               )
+              )
+            )
+          )
         )
       })
     }
@@ -1358,17 +1731,17 @@ elaborator_server <- function(input, output, session) {
     shiny::updateActionButton(
       session,
       inputId = "apply_qual_plot",
-      label = paste0('Create/Update ', data_param()$nlab*data_param()$ntreat,' Plots')
+      label = paste0('Create/Update ', data_param()$nlab*data_param()$ntreat,' graphs')
     )
     shiny::updateActionButton(
       session,
       inputId = "apply_quant_plot",
-      label = paste0('Create/Update ', data_param()$nlab*data_param()$ntreat,' Plots')
+      label = paste0('Create/Update ', data_param()$nlab*data_param()$ntreat,' graphs')
     )
     shiny::updateActionButton(
       session,
       inputId = "apply_ref_plot",
-      label = paste0('Create/Update ', data_param()$nlab2*data_param()$ntreat,' Plots')
+      label = paste0('Create/Update ', data_param()$nlab2*data_param()$ntreat,' graphs')
     )
   })
 
@@ -1381,7 +1754,7 @@ elaborator_server <- function(input, output, session) {
     })
   })
 
-  shiny::observeEvent(df()$data, {
+  shiny::observeEvent(raw_data_and_warnings()$data, {
     start$dat <- TRUE
   })
 
@@ -1403,7 +1776,7 @@ elaborator_server <- function(input, output, session) {
 
   shiny::observeEvent(c(input$go_select2), {
     shiny::req(
-      ds2(),
+      data_with_selected_factor_levels(),
       input$trtcompar,
       input$stattest,
       input$select.treatments,
@@ -1411,30 +1784,44 @@ elaborator_server <- function(input, output, session) {
       input$select.visit
     )
 
-    dat <- ds2()
+    dat <- data_with_selected_factor_levels()
     T1 <- input$trtcompar[1]
     T2 <- input$trtcompar[-1]
     signtest <- input$stattest
 
-    if (input$stattest == "signtest" && length(input$trtcompar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
-      values$default <- elaborator_derive_test_values(
-        data = dat,
-        signtest = TRUE,
-        Visit1 = T1,
-        Visit2 = T2,
-        lab_column = "PARAMCD"
+    if (input$stattest == "signtest" | input$stattest == "ttest") {
+      statistical_test_results$var <- elaborator_calculate_test_for_all_visits(
+          elab_data = dat,
+          Visit1 = T1,
+          Visit2 = T2,
+          sign_test = input$stattest,
+          pcutoff = shiny::isolate(input$pcutoff)
       )
-    } else if (input$stattest== "ttest" && length(input$trtcompar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
-      values$default <- elaborator_derive_test_values(
-        data = dat,
-        signtest = FALSE,
-        Visit1 = T1,
-        Visit2 = T2,
-        lab_column = "PARAMCD"
-      )
+
     } else {
-      values$default <- NA
+      statistical_test_results$var <- NULL
     }
+
+    # if (input$stattest == "signtest" && length(input$trtcompar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
+    #   values$default <- elaborator_derive_test_values(
+    #     data = dat,
+    #     signtest = TRUE,
+    #     Visit1 = T1,
+    #     Visit2 = T2,
+    #     lab_column = "LBTESTCD"
+    #   )
+    #
+    # } else if (input$stattest== "ttest" && length(input$trtcompar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
+    #   values$default <- elaborator_derive_test_values(
+    #     data = dat,
+    #     signtest = FALSE,
+    #     Visit1 = T1,
+    #     Visit2 = T2,
+    #     lab_column = "LBTESTCD"
+    #   )
+    # } else {
+    #   values$default <- NA
+    # }
   })
 
   shiny::observeEvent(input$link_to_tab_info, {
@@ -1474,10 +1861,21 @@ elaborator_server <- function(input, output, session) {
   })
 
   shiny::observeEvent(
-    c(input$sameaxes, input$add_points, input$sortpoint,
-      input$con_lin, input$go_select2, input$select.visit,
-      input$select.treatments, input$select.lab, input$select.toleratedPercentage,
-      input$go3), {
+    c(input$sameaxes,
+      input$add_points,
+      input$con_lin,
+      input$go_select2,
+      input$select.visit,
+      input$select.treatments,
+      input$select.lab,
+      input$select.toleratedPercentage,
+      input$go3,
+      input$sortpoint,
+      input$zoompx,
+      input$con_lin_options,
+      input$custom_visists,
+      input$outlier
+    ), {
         output$cont1 <- shiny::renderUI({
           list(
             shiny::tags$head(
@@ -1583,4 +1981,216 @@ elaborator_server <- function(input, output, session) {
           HTML(paste0("<b style='color: #47d2bc;'> Please use the 'Create/Update Plots'-button on the left side to update settings!</b>"))
         })
       })
+
+
+  #### FILTER ####
+  # Reset initial values if Remove Button is clicked
+  shiny::observeEvent(input$removeBtn, {
+    id_elab_m$myList <- list()
+    id_elab_m$myList2 <- list()
+  })
+
+  # Delete UI Elements if Remove Button is clicked
+  shiny::observeEvent(input$removeBtn, {
+    for (i in 1:length(inserted_elab)) {
+      removeUI(selector = paste0("#", inserted_elab[i]))
+    }
+  })
+
+    output$filter_percentage <- shiny::renderUI({
+      total_tmp <- dim(raw_data_and_warnings()$data)[1]
+      value_tmp <- dim(filtered_raw_data())[1]
+      shinyWidgets::progressBar(
+        id = "filter_percentage",
+        value = value_tmp,
+        total = total_tmp,
+        title = "",
+        display_pct = TRUE
+      )
+    })
+
+    output$pickerinput_filter <- shiny::renderUI({
+    shiny::req(raw_data_and_warnings())
+
+    dat <- raw_data_and_warnings()$data
+
+    data_variables_tmp <- purrr::map(
+      dat,
+      function(x) attr(x, "label", exact = TRUE)
+    )
+    data_variables = names(data_variables_tmp)
+    names(data_variables) = paste0(
+      names(data_variables_tmp),
+      ifelse(
+        as.character(data_variables_tmp) == "NULL",
+        "",
+        paste0(" - ", as.character(data_variables_tmp))
+      )
+    )
+
+    choices <- data_variables
+
+    shinyWidgets::pickerInput(
+      inputId = 'pickerinput_filter',
+      label = 'Select filter variable(s) for elaborator data set',
+      choices = choices,
+      selected = NULL,
+      multiple = TRUE,
+      options = list(
+        `actions-box` = TRUE,
+        `selected-text-format` = 'count > 0',
+        `count-selected-text` = '{0} selected (of {1})',
+        `live-search` = TRUE,
+        `header` = 'Select multiple items',
+        `none-selected-text` = 'No selection!'
+      )
+    )
+  })
+ inserted_elab <- c()
+
+  id_elab_nr <- c()
+  id_elab_nr2 <- c()
+
+  id_elab_m <- shiny::reactiveValues()
+  id_elab_m$myList <- list()
+  id_elab_m$myList2 <- list()
+  inserted_elab_list <- shiny::reactive({
+    list()
+  })
+
+
+   shiny::observeEvent(c(input$insertBtn), {
+
+    shiny::req(raw_data_and_warnings()$data)
+
+    elab_data <- raw_data_and_warnings()$data
+
+    ins_elab <- inserted_elab_list()
+    id_elab_nr <<- c()
+    id_elab_nr2 <<- c()
+
+    if (length(inserted_elab) > 0) {
+      for (i in 1:length(inserted_elab)) {
+        shiny::removeUI(
+          ## pass in appropriate div id
+          selector = paste0('#', inserted_elab[i])
+        )
+      }
+    }
+
+    inserted_elab <<- c()
+
+    btn <- input$insertBtn
+
+    pickerinput_filter <- input$pickerinput_filter
+
+    if (length(pickerinput_filter) > 0) {
+      for (i in 1: length(pickerinput_filter)) {
+        id <- paste0(pickerinput_filter[i], btn)
+        shiny::insertUI(
+          selector = '#placeholder',
+          ui = shiny::tags$div(
+            if (!is.numeric(elab_data %>%
+                           dplyr::pull(pickerinput_filter[i]))) {
+              shinyWidgets::pickerInput(
+                inputId = id,
+                label = paste0(pickerinput_filter[i]),
+                choices = elab_data %>%
+                  dplyr::pull(pickerinput_filter[i]) %>%
+                  unique,
+                selected = elab_data %>%
+                  dplyr::pull(pickerinput_filter[i]) %>%
+                  unique,
+                multiple = TRUE,
+                options = list(
+                  `actions-box` = TRUE,
+                  `selected-text-format` = 'count > 0',
+                  `count-selected-text` = '{0} selected (of {1})',
+                  `live-search` = TRUE,
+                  `header` = 'Select multiple items',
+                  `none-selected-text` = 'All dropped!'
+                )
+              )
+            } else if (
+              is.numeric(
+                elab_data %>%
+                  dplyr::pull(pickerinput_filter[i])
+              ) && !is.integer(
+                elab_data %>%
+                  dplyr::pull(pickerinput_filter[i])
+                )
+            ) {
+              shiny::sliderInput(
+                inputId = id,
+                label = paste0(pickerinput_filter[i]),
+                value = c(
+                  elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    base::min(na.rm = TRUE), elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    base::max(na.rm = TRUE)
+                ),
+                min = elab_data %>%
+                 dplyr::pull(pickerinput_filter[i]) %>%
+                 base::min(na.rm = TRUE),
+                max = elab_data %>%
+                 dplyr::pull(pickerinput_filter[i]) %>%
+                 base::max(na.rm = TRUE)
+              )
+            } else if (
+                is.numeric(
+                  elab_data %>%
+                    dplyr::pull(pickerinput_filter[i])
+                ) &&
+                is.integer(
+                  elab_data %>%
+                    dplyr::pull(pickerinput_filter[i])
+                )
+              ) {
+              shiny::sliderInput(
+                inputId = id,
+                label = paste0(pickerinput_filter[i]),
+                value = c(elab_data %>%
+                  dplyr::pull(pickerinput_filter[i]) %>%
+                  base::min(na.rm = TRUE),elab_data %>%
+                  dplyr::pull(pickerinput_filter[i]) %>%
+                  base::max(na.rm = TRUE)
+                ),
+                min = elab_data %>%
+                  dplyr::pull(pickerinput_filter[i]) %>%
+                  base::min(na.rm = TRUE),
+                max = elab_data %>%
+                  dplyr::pull(pickerinput_filter[i]) %>%
+                  base::max(na.rm = TRUE),
+                step = 1,
+                sep = "",
+                ticks = FALSE
+              )
+            },
+            id = id
+          )
+        )
+        inserted_elab <<- c(id, inserted_elab)
+        ins_elab[[pickerinput_filter[i]]]  <- elab_data %>%
+          dplyr::pull(pickerinput_filter[i])
+        id_elab_nr2 <<- c(id_elab_nr2, pickerinput_filter[[i]])
+        id_elab_nr <<- c(id_elab_nr,id)
+      }
+    }
+
+    id_elab_m$myList2 <- id_elab_nr2
+    id_elab_m$myList <- id_elab_nr
+  })
+
+  shiny::observe({
+    if (file.exists(here::here("data", "elaborator_demo.RData"))) {
+      updatePrettyRadioButtons(
+        session,
+        inputId = "impswitch",
+        label = 'Select file format',
+        choices = c('*.RData file', '*.CSV file','Demo data'),
+        prettyOptions = list(status = "warning")
+      )
+    }
+  })
 }

@@ -1,4 +1,4 @@
-#' Pattern number for input patterns defined by decreases, stability and increases 
+#' Pattern number for input patterns defined by decreases, stability and increases
 #'
 #' @description
 #' This function is mostly useful for generating the qualitative trend analysis plots. It returns the pattern numbers for input patterns.

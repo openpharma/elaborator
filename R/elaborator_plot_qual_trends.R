@@ -30,9 +30,9 @@ elaborator_plot_qual_trends <- function(
   ColorBG <- "#E2F3F2"
 
   if (length((unique(dat1$TRTP))) == 0 |
-      length(unique(dat1[, "PARAMCD"])) == 0) {
-    on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
-    on.exit(graphics::par(on_ex))
+      length(unique(dat1[, "LBTESTCD"])) == 0) {
+    # on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
+    # on.exit(graphics::par(on_ex))
     graphics::par(
       mfrow = c(1,1),
       bty = "n",
@@ -65,14 +65,14 @@ elaborator_plot_qual_trends <- function(
       cex = 1
     )
   } else {
-    if (length(unique(dat1$PARAMCD))*length(unique(dat1$TRTP)) > 1) {
-      shiny::withProgress(message = paste0('generating ', length(unique(dat1$PARAMCD))*length(unique(dat1$TRTP)),' Plots ...'), value = 0, {
+    if (length(unique(dat1$LBTESTCD))*length(unique(dat1$TRTP)) > 1) {
+      shiny::withProgress(message = paste0('generating ', length(unique(dat1$LBTESTCD))*length(unique(dat1$TRTP)),' Plots ...'), value = 0, {
         shiny::incProgress(0, detail = paste(""))
 
         D <- data.frame(
           subj = dat1$SUBJIDN,
           treat = dat1$TRTP,
-          variable = dat1$PARAMCD,
+          variable = dat1$LBTESTCD,
           time = dat1$AVISIT,
           value = dat1$LBORRES
         )
@@ -137,7 +137,7 @@ elaborator_plot_qual_trends <- function(
           "ps", "cex", "family"
         )
 
-        on.exit(graphics::par(on_ex))
+        # on.exit(graphics::par(on_ex))
 
         graphics::par(
           mai = rep(0, 4),
@@ -231,7 +231,7 @@ elaborator_plot_qual_trends <- function(
             )
             graphics::rect(
               xleft = graphics::par()$usr[1]-0.1,
-              ybottom = graphics::par()$usr[3]-0.1,
+              ybottom = graphics::par()$usr[3] + 0.2-0.1,
               xright = graphics::par()$usr[2]+0.1,
               ytop = graphics::par()$usr[4]+0.1,
               col = ColorBG
@@ -239,8 +239,8 @@ elaborator_plot_qual_trends <- function(
 
             if (method == "InQuRa") {
               graphics::text(
-                graphics::par()$usr[1] + 2,
-                graphics::par()$usr[4] - 0.2,
+                x =  graphics::par()$usr[1] + 2,
+                y = graphics::par()$usr[3] + 0.2,
                 paste0(
                   "Tolerated difference:",
                   Summa %>%
@@ -253,7 +253,7 @@ elaborator_plot_qual_trends <- function(
             } else if (method == "Range") {
               graphics::text(
                 graphics::par()$usr[1] + 2,
-                graphics::par()$usr[4] - 0.2,
+                graphics::par()$usr[3] + 0.2,
                 paste0(
                   "Tolerated difference:",
                   Summa %>%
@@ -266,7 +266,7 @@ elaborator_plot_qual_trends <- function(
             } else if (method == "Reference Range") {
               graphics::text(
                 graphics::par()$usr[1] + 2,
-                graphics::par()$usr[4] - 0.2,
+                graphics::par()$usr[3] + 0.2,
                 paste0(
                   "Tolerated difference:",
                   Summa %>%
@@ -314,7 +314,7 @@ elaborator_plot_qual_trends <- function(
     D <- data.frame(
       subj = dat1$SUBJIDN,
       treat = dat1$TRTP,
-      variable = dat1$PARAMCD,
+      variable = dat1$LBTESTCD,
       time = dat1$AVISIT,
       value = dat1$LBORRES
     )
@@ -383,13 +383,13 @@ elaborator_plot_qual_trends <- function(
                            "font.sub", "font.main", "font.sub",
                            "ps", "cex", "family")
 
-    on.exit(graphics::par(on_ex))
+    # on.exit(graphics::par(on_ex))
 
     graphics::par(mai = rep(0, 4), xaxs = "i", yaxs = "i",
                   bg = ColorBG,
                   fg = grDevices::rgb(140, 140, 140, maxColorValue = 255),
                   font = 1, font.axis = 1, font.lab = 1, font.main = 1, font.sub = 1,
-                  ps = 5, cex = 1,
+                  ps = 5, cex = 1.2,
                   family = "sans")
 
 
@@ -444,22 +444,22 @@ elaborator_plot_qual_trends <- function(
 
             w=floor(max(as.vector(by(E$mg,E$mg,length)))/2)+1
             graphics::plot(-w:w,-w:w,ylim=c(min(E$mg)-1,max(E$mg)+1),xlab="", ylab="",type="n",xaxs="i",yaxs="i",axes=FALSE)
-            graphics::rect(xleft=graphics::par()$usr[1]-0.1, ybottom=graphics::par()$usr[3]-0.1, xright=graphics::par()$usr[2]+0.1, ytop=graphics::par()$usr[4]+0.1,col=ColorBG) #ColorPanel
+            graphics::rect(xleft=graphics::par()$usr[1]-0.1, ybottom=graphics::par()$usr[3] + 0.2-0.1, xright=graphics::par()$usr[2]+0.1, ytop=graphics::par()$usr[4]+0.1,col=ColorBG) #ColorPanel
 
             if(method == "InQuRa"){
-              graphics::text(graphics::par()$usr[1] + 2, graphics::par()$usr[4] - 0.2, paste0("Tolerated difference:",
+              graphics::text(graphics::par()$usr[1] + 2, graphics::par()$usr[3] + 0.2, paste0("Tolerated difference:",
                                                                                               Summa %>%
                                                                                                 dplyr::filter(variable == va) %>%
                                                                                                 dplyr::pull(InQuRa) %>%
                                                                                                 round(2)), cex = fontsize)
             }else if(method == "Range"){
-              graphics::text(graphics::par()$usr[1] + 2, graphics::par()$usr[4] - 0.2, paste0("Tolerated difference:",
+              graphics::text(graphics::par()$usr[1] + 2, graphics::par()$usr[3] + 0.2, paste0("Tolerated difference:",
                                                                                               Summa %>%
                                                                                                 dplyr::filter(variable == va) %>%
                                                                                                 dplyr::pull(Range) %>%
                                                                                                 round(2)), cex = fontsize)
             }else if(method == "Reference Range"){
-              graphics::text(graphics::par()$usr[1] + 2, graphics::par()$usr[4] - 0.2, paste0("Tolerated difference:",
+              graphics::text(graphics::par()$usr[1] + 2, graphics::par()$usr[3] + 0.2, paste0("Tolerated difference:",
                                                                                               Summa %>%
                                                                                                 dplyr::filter(variable == va) %>%
                                                                                                 dplyr::pull(refRange) %>%
@@ -494,11 +494,11 @@ elaborator_plot_qual_trends <- function(
             }
 
             if (tr == Treats[1]){
-              graphics::text(x[j],max(E$mg)+0.75,va,cex=2)
+              graphics::text(x[j],max(E$mg) + 0.75, va, cex = fontsize)
             }
 
             if (va == Variab[1]){
-              graphics::text(tlx-0.75,(min(E$mg)+max(E$mg))/2,tr,srt=90,cex=2)
+              graphics::text(tlx - 0.75,(min(E$mg)+max(E$mg))/2,tr,srt=90,cex=fontsize)
             }
           }
         }

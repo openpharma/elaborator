@@ -71,10 +71,25 @@
 #'
 #' @return A shiny app
 
-launch_elaborator <- function(host = "0.0.0.0", port = NULL, browser = NULL){
+launch_elaborator <- function(
+    elaborator_data = NULL,
+    host = "0.0.0.0",
+    port = NULL,
+    browser = NULL
+  ){
+
+  apppars <- list(
+    elaborator_data = elaborator_data
+  )
+  server_env <- environment(elaborator_server)
+  # server_env$apppars <- apppars
+
   elaborator_app <- shiny::shinyApp(ui = elaborator_ui, server = elaborator_server)
   on_ex_browser <- options()$browser
   on.exit(options(browser = on_ex_browser))
   if (!is.null(browser)) options(browser = browser)
+
+
+
   shiny::runApp(elaborator_app, host = host, port = port)
 }

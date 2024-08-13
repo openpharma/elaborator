@@ -8,9 +8,9 @@
 #'@param Visit1 name of visit time point one
 #'@param Visit2 name of visit time point two, or vector of visit names for pairwise comparison to Visit1
 #'@param sameaxes logical indicating if boxplot should have the same y-axis range for all treatment groups within a laboratory parameter
-#'@param ats numeric vector giving the locations where the boxplots should be drawn; defaults to 1:n where n is the number of boxplots. 
+#'@param ats numeric vector giving the locations where the boxplots should be drawn; defaults to 1:n where n is the number of boxplots.
 #'@param cols vector with colors of boxplots
-#'@param labelvis vector of visit names used for labelling
+#'@param labelvis vector of visit names used for labeling
 #'@param labcolumn column name of dat1 which includes the laboratory parameter names
 #'@param sortpoints logical indicating if dots in boxplots should be sorted from smallest to largest
 #'@param pcutoff numeric for p-value threshold; if p-value of specified test is below this threshold, the background of the respective plot is colorized.
@@ -44,17 +44,17 @@ elaborator_plot_quant_trends <- function(
   add_points = TRUE,
   connect_lines = FALSE
   ) {
-  PARAMCD <- . <- AVISIT <- SUBJIDN <- TRTP <- LBORRES <- NULL
+  LBTESTCD <- . <- AVISIT <- SUBJIDN <- TRTP <- LBORRES <- NULL
 
-  if (length(unique(dat1$PARAMCD))*length(unique(dat1$TRTP)) > 1) {
-  shiny::withProgress(message = paste0('generating ', length(unique(dat1$PARAMCD))*length(unique(dat1$TRTP)),' Plots ...'), value = 0, {
+  if (length(unique(dat1$LBTESTCD))*length(unique(dat1$TRTP)) > 1) {
+  shiny::withProgress(message = paste0('generating ', length(unique(dat1$LBTESTCD))*length(unique(dat1$TRTP)),' Plots ...'), value = 0, {
     ColorBG <- "#E2F3F2"
     textcol <- arrowcol <- "#f78300"
     shiny::incProgress(0, detail = paste(""))
     if (length((unique(dat1$TRTP))) == 0 |
        length(unique(dat1[, labcolumn])) == 0){
-      on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
-      on.exit(graphics::par(on_ex))
+      # on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
+      # on.exit(graphics::par(on_ex))
       graphics::par(
         mfrow = c(1,1),
         bty = "n",
@@ -65,8 +65,8 @@ elaborator_plot_quant_trends <- function(
       graphics::plot(NULL, NULL, ylim = c(0, 1), xlim = c(0, 1), axes = FALSE, ylab = "", xlab = "")
       graphics::text(0.5 , 0.5 , paste0("No values for this Treatment"))
     } else {
-      on_ex <- graphics::par("mfrow","bty","mar","oma","cex.main","bg")
-      on.exit(graphics::par(on_ex))
+      # on_ex <- graphics::par("mfrow","bty","mar","oma","cex.main","bg")
+      # on.exit(graphics::par(on_ex))
       graphics::par(
         mfrow = c(
           length((unique(dat1$TRTP))),
@@ -89,7 +89,7 @@ elaborator_plot_quant_trends <- function(
           nvisit <- length(
             unique(
               dattreat %>%
-                dplyr::filter(PARAMCD == labpara) %>%
+                dplyr::filter(LBTESTCD == labpara) %>%
                 .$AVISIT
             )
           )
@@ -243,7 +243,7 @@ elaborator_plot_quant_trends <- function(
                   k <- which(
                     levels(
                       dat1 %>%
-                        dplyr::filter(PARAMCD == labpara) %>%
+                        dplyr::filter(LBTESTCD == labpara) %>%
                         .$AVISIT %>%
                         droplevels()
                     ) == j
@@ -404,8 +404,8 @@ elaborator_plot_quant_trends <- function(
       textcol <- arrowcol <- "#f78300"
       if (length((unique(dat1$TRTP))) == 0 |
          length(unique(dat1[, labcolumn])) == 0) {
-        on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
-        on.exit(graphics::par(on_ex))
+        # on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
+        # on.exit(graphics::par(on_ex))
         graphics::par(
           mfrow = c(1,1),
           bty = "n",
@@ -416,8 +416,8 @@ elaborator_plot_quant_trends <- function(
         graphics::plot(NULL, NULL, ylim = c(0, 1), xlim = c(0, 1), axes = FALSE, ylab = "", xlab = "")
         graphics::text(0.5 , 0.5 , paste0("No values for this Treatment"))
       } else {
-        on_ex <- graphics::par("mfrow","bty","mar","oma","cex.main","bg")
-        on.exit(graphics::par(on_ex))
+        # on_ex <- graphics::par("mfrow","bty","mar","oma","cex.main","bg")
+        # on.exit(graphics::par(on_ex))
         graphics::par(mfrow = c(length((unique(dat1$TRTP))),
                                 length(unique(dat1[, labcolumn]))),
                       bty = "n",
@@ -434,7 +434,7 @@ elaborator_plot_quant_trends <- function(
 
             ntreat <- length(unique(dattreat$TRTP))
             nvisit <- length(unique(dattreat %>%
-                                      dplyr::filter(PARAMCD == labpara) %>%
+                                      dplyr::filter(LBTESTCD == labpara) %>%
                                       .$AVISIT))
             nlab <- length(unique(dattreat$LBTESTCD))
 
@@ -557,7 +557,7 @@ elaborator_plot_quant_trends <- function(
                     k <- which(
                       levels(
                         dat1 %>%
-                          dplyr::filter(PARAMCD == labpara) %>%
+                          dplyr::filter(LBTESTCD == labpara) %>%
                           .$AVISIT %>%
                           droplevels()
                       ) == j

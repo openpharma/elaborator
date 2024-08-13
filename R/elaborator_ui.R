@@ -131,7 +131,8 @@ boxPlotColor <- function(input, output, session, dat, name, start_color, number)
 }
 
 #### dashboardPage ####
-elaborator_ui <- shinydashboard::dashboardPage(
+elaborator_ui <- function() {
+  shinydashboard::dashboardPage(
   title = "elaborator",
   shinydashboard::dashboardHeader(
     title = shiny::img(
@@ -193,7 +194,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
           bsplus::use_bs_popover(),
           bsplus::use_bs_tooltip(),
           bsplus::bs_embed_tooltip(
-            tag = h4(span(shiny::tagList("Order of lab parameters", icon("question")))),
+            tag = h5(span(shiny::tagList("Order of lab parameters", icon("question")))),
             title = "You can choose between three options to arrange laboratory parameters. Details on the AI-sortng option are given in the 'Information'-tab.", placement = "top", expanded = TRUE
           ),
           shinyWidgets::prettyRadioButtons(
@@ -202,13 +203,23 @@ elaborator_ui <- shinydashboard::dashboardPage(
             choices = c(
               "As in input" = "asinp",
               "AI sorted" = "auto",
-              "Alphabetically" = "alphabetically"
+              "Alphabetically" = "alphabetically",
+              "Manual" = "manual"
             ),
             selected = "alphabetically",
             status = "warning"
           ),
-          shiny::conditionalPanel(
-            condition = "input.orderinglab == 'auto'",
+          shiny::conditionalPanel(condition = "input.orderinglab == 'manual'",
+            shiny::selectizeInput(
+              inputId = 'arrange.lab',
+              label = 'Labparameter (drag and drop)',
+              choices = NULL,
+              selected = NULL,
+              multiple = TRUE,
+              options = list('plugins' = list('drag_drop'))
+            )
+          ),
+          shiny::conditionalPanel(condition = "input.orderinglab == 'auto'",
             shinyWidgets::pickerInput(
               inputId = 'select.ai.first',
               label = 'Select first visit for change assessment',
@@ -325,15 +336,38 @@ elaborator_ui <- shinydashboard::dashboardPage(
               `none-selected-text` = 'All dropped!'
             )
           ),
+          bsplus::bs_embed_tooltip(
+            tag = h5(span(shiny::tagList("Tolerated missings percentage:", icon("question")))),
+            title = "Select percentage of missing values per
+            visit allowed to be still included in the analysis
+            (100% means no visits will be removed).",
+            placement = "top",
+            expanded =TRUE
+          ),
           shiny::sliderInput(
             inputId = 'select.toleratedPercentage',
-            label = 'Select percentage of tolerated missing values',
-            min = 0.25,
-            max = 0.75,
-            value = 0.5,
-            step = 0.05
+            label ='',
+            min = 25,
+            max = 100,
+            value = 50,
+            step = 5,
+            post = "%"
           )
         )
+      ),
+      shinydashboard::menuItem(
+        "Filter",
+        icon = icon("filter"),
+        tabName = "filter",
+        badgeLabel = "new",
+        badgeColor = "green"
+      ),
+       shinydashboard::menuItem(
+        "Raw Data",
+        icon = icon("file-lines"),
+        tabName = "raw_data",
+        badgeLabel = "new",
+        badgeColor = "green"
       ),
       shinydashboard::menuItem(
         text = "Data Manual",
@@ -344,7 +378,8 @@ elaborator_ui <- shinydashboard::dashboardPage(
         text = "Information",
         icon = icon("info"),
         tabName = "helptext"
-      )
+      ),
+      "elaborator Version 1.3"
     )
   ),
   #### dashboardBody ####
@@ -436,8 +471,8 @@ elaborator_ui <- shinydashboard::dashboardPage(
           shiny::tags$head(
             shiny::tags$style(
               ".fa-question {color:#e3e3e3}",
-              "fa-plus {color:#ffffff}",
-              "fa-minus {color:#ffffff}",
+              ".fa-plus {color:#ffffff}",
+              ".fa-minus {color:#ffffff}",
               ".fa-square {color:#47d2bc}",
               ".fa-stop {color: #ffeeaa}",
               ".fa-flask {color: ", ColorBG, "}"
@@ -454,59 +489,102 @@ elaborator_ui <- shinydashboard::dashboardPage(
               shiny::fluidRow(
                 bsplus::use_bs_popover(),
                 bsplus::use_bs_tooltip(),
-                shiny::column(2,
-                  shinydashboard::box(
-                    width = 15,
-                    bsplus::bs_embed_tooltip(
-                      tag = h4(span(shiny::tagList("Use same scales within lab parameter:", icon("question")))),
-                      title = "Define whether the scales are the same among all treatment groups. Using the same scales among all treatment groups enables a much better comparison between treatment groups. Otherwise, each plot will have its own scale.",
-                      placement = "top",
-                      expanded =TRUE
-                    ),
+                shiny::column(3,
                     shiny::checkboxInput(
                       inputId = "sameaxes",
-                      label = tags$div(tags$h5("Same scales among all treatments")),
-                      value = TRUE
+                      label = tagList("Use same scales within lab parameter",bsplus::bs_embed_tooltip(
+                        tag = bsplus::shiny_iconlink("question"),
+                        title = "Define whether the scales are the same among all treatment groups.
+                        Using the same scales among all
+                        treatment groups enables a much better comparison between treatment groups.
+                        Otherwise, each plot will have its own scale.",
+                        placement = "top"
+                      )),
+                      value = FALSE
                     ),
-                    background = 'black'
-                  )
-                ),
-                shiny::column(2,
-                  shinydashboard::box(
-                    width = 12,
+                    shiny::checkboxInput(
+                      inputId = "outlier",
+                      label = tagList("Use outlier corrected scale",bsplus::bs_embed_tooltip(
+                        tag = bsplus::shiny_iconlink("question"),
+                        title = "Define whether the scales are outlier corrected or not. Outlier correction
+                        uses the five times interquartile range as a definition of outliers.",
+                        placement = "top"
+                      )),
+                      value = FALSE
+                    ),
                     bsplus::use_bs_popover(),
                     bsplus::use_bs_tooltip(),
-                    bsplus::bs_embed_tooltip(
-                    tag = h4(span(shiny::tagList("Patient-specific values", icon("question")))),
-                    title = "Tick first box for plotting patient-specific lab values as single points. Tick second box for sorting patient-specific values from smallest to largest; if not ticked they are shown as they occur in the dataset. Tick third box for plotting connection lines between patient measurements.",
-                    placement = "bottom",
-                    expanded = TRUE
-                    ),
                     shiny::checkboxInput(
                       inputId = "add_points",
-                      label = tags$div(tags$h5("Show patient-specific values")),
-                      value = TRUE
+                      label = tagList("Patient-specific values",bsplus::bs_embed_tooltip(
+                        tag = bsplus::shiny_iconlink("question"),
+                        title = "Tick box for plotting patient-specific lab values as single points sorted from smallest to largest.
+                        ",
+                        placement = "top"
+                      )),
+                      value = FALSE
                     ),
-                    shiny::checkboxInput(
-                      inputId = "sortpoint",
-                      label = "Sort patient-specific values",
-                      value = TRUE
+                      shiny::conditionalPanel(condition = "input.add_points == true",
+                        shiny::checkboxInput(
+                          inputId = "sortpoint",
+                          label = "Sort patient-specific values",
+                          value = FALSE
+                        )
                     ),
                     shiny::checkboxInput(
                       inputId = "con_lin",
-                      label = tags$div(tags$h5("Draw connection lines")),
+                      label = tagList(
+                        "Draw connection lines",
+                        bsplus::bs_embed_tooltip(
+                          tag = bsplus::shiny_iconlink("question"),
+                          title = "Tick box for plotting connection lines between patient measurements.
+                          If the option 'First/last visit' is selected, the colors indicating increasing or decreasing lab
+                          values from first to last visit.
+                          If 'Each visit' is selected, the colors indicating increase/decrease between each visit for a single subject.
+                          The 'Custom visit' option can be used to select two visits for the increase/decrease indication.
+                          If more or less then 2 visits are selected, all lines appear grey.
+                          This is also the case for the last option 'All grey'.
+                          ",
+                          placement = "right"
+                        )
+                      ),
                       value = FALSE
                     ),
-                    background = 'black'
+                  conditionalPanel(condition = "input.con_lin == true",
+                    prettyRadioButtons(
+                     inputId = "con_lin_options",
+                      label = "",
+                      choices = c(
+                        "First/last visit" = "first_last",
+                        "Each visit" = "each_visit",
+                        "Custom visits" = "custom_visits",
+                        "All grey" = "all_grey"
+                      ),
+                      selected = "first_last",
+                      status = "warning",
+                      inline = TRUE
+                    )
+                  ),
+                  conditionalPanel(condition = "input.con_lin_options == 'custom_visits'",
+                    shiny::checkboxGroupInput(
+                      inputId = "custom_visits",
+                      label = "",
+                      choices = NULL,
+                      selected = NULL,
+                      inline = TRUE
+                    ),
+                    conditionalPanel(condition = "input.custom_visits.length != 2",
+                      HTML("<p style='color: red'> Please select exactly two visits </p>")
+                    )
                   )
                 ),
                 shinydashboard::box(
                   background = 'black',
-                  shiny::column(3,
+                  shiny::column(4,
                     bsplus::use_bs_popover(),
                     bsplus::use_bs_tooltip(),
                     bsplus::bs_embed_tooltip(
-                      tag = h4(span(shiny::tagList("Test for explorative trend detection", icon("question")))),
+                      tag = h5(span(shiny::tagList("Test for explorative trend detection", icon("question")))),
                       title = "Explore whether there are any trends over time (comparison of test results between treatment groups is only recommended for balanced designs). Choose the approproate statistical test. The statistical test aims to assess whether patient-specific changes in laboratory values occur.",
                       placement = "bottom",
                       expanded =TRUE
@@ -517,22 +595,24 @@ elaborator_ui <- shinydashboard::dashboardPage(
                       choices = c(
                         "None" = "none",
                         "Sign test" = "signtest",
-                        "T-test" = "ttest"
+                        "t-test" = "ttest"
                       ),
                       selected = "none",
                       status = "warning"
                     ),
-                    shiny::actionButton(
-                      inputId = "go_select2",
-                      label = "Update!",
-                      icon = icon("redo"),
-                      style = paste0(
-                        "color: ",
-                        ColorBG,
-                        "; background-color: ",
-                        ColorHighlight,
-                        "; border-color: ",
-                        ColorBG
+                    conditionalPanel(condition = "input.trtcompar.length > 1 | input.stattest == 'none'",
+                      shiny::actionButton(
+                        inputId = "go_select2",
+                        label = "Update!",
+                        icon = icon("redo"),
+                        style = paste0(
+                          "color: ",
+                          ColorBG,
+                          "; background-color: ",
+                          ColorHighlight,
+                          "; border-color: ",
+                          ColorBG
+                        )
                       )
                     )
                   ),
@@ -541,7 +621,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                       bsplus::use_bs_popover(),
                       bsplus::use_bs_tooltip(),
                       bsplus::bs_embed_tooltip(
-                        tag = h4(span(shiny::tagList("Visits to compare", icon("question")))),
+                        tag = h5(span(shiny::tagList("Visits to compare", icon("question")))),
                         title = "Select which visits you want to test for the existence of a trend. If more than two visits are selected, the first selection is tested against any of the others (pairwise testing).",
                         placement = "top",
                         expanded = TRUE
@@ -564,7 +644,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                       bsplus::use_bs_popover(),
                       bsplus::use_bs_tooltip(),
                       bsplus::bs_embed_tooltip(
-                        tag = h4(span(shiny::tagList("p-value cutoff", icon("question")))),
+                        tag = h5(span(shiny::tagList("p-value cutoff", icon("question")))),
                         title = "Statistical tests are performed for each lab parameter and treatment group. Backgrounds are colored if the respective p-value lies below this p-value threshold.",
                         placement = "top",
                         expanded = TRUE
@@ -575,7 +655,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                         min = 0,
                         max = 0.2,
                         value = 0.01,
-                        step = 0.01
+                        step = 0.005
                       )
                     )
                   )
@@ -589,17 +669,17 @@ elaborator_ui <- shinydashboard::dashboardPage(
                   shiny::conditionalPanel(condition = "input.stattest != 'none'",
                     bsplus::use_bs_popover(),
                     bsplus::use_bs_tooltip(),
-                    bsplus::bs_embed_tooltip(tag = h4(span(shiny::tagList(tags$i(class = "fa fa-square", style = "color:#47d2bc"), "Decrease"))),
+                    bsplus::bs_embed_tooltip(tag = h5(span(shiny::tagList(tags$i(class = "fa-solid fa-square", style = "color:#47d2bc"), "Decrease"))),
                       title = "Statistical test indicates a decrease in values.",
                       placement = "top",
                       expanded = TRUE
                     ),
-                    bsplus::bs_embed_tooltip(tag = h4(span(shiny::tagList(tags$i(class = "fa fa-square", style = "color:#ffeeaa"), "Increase"))),
+                    bsplus::bs_embed_tooltip(tag = h5(span(shiny::tagList(tags$i(class = "fa-solid fa-square", style = "color:#ffeeaa"), "Increase"))),
                       title = "Statistical test indicates an increase in values.",
                       placement = "top",
                       expanded = TRUE
                     ),
-                    bsplus::bs_embed_tooltip(tag = h4(span(shiny::tagList(tags$i(class = "fa fa-square", style = "color:#A9A9A9"),"Missing"))),
+                    bsplus::bs_embed_tooltip(tag = h5(span(shiny::tagList(tags$i(class = "fa-solid fa-square", style = "color:#A9A9A9"),"Missing"))),
                       title = "Statistical test indicates missing values.",
                       placement = "top",
                       expanded = TRUE
@@ -618,11 +698,12 @@ elaborator_ui <- shinydashboard::dashboardPage(
               background = 'black',
               collapsible = TRUE,
               collapsed = TRUE,
+              height = "100%",
               shiny::fluidRow(
                 shiny::column(12,
                   shiny::plotOutput(
                     outputId = 'dendro_1',
-                    height = "250px"
+                    height = "450px"
                   )
                 )
               )
@@ -707,17 +788,6 @@ elaborator_ui <- shinydashboard::dashboardPage(
             <ul>
             <li> A <b>c</b>omma <b>s</b>eparated <b>v</b>alues (CSV) file </li>
             <li> An RData file <br>
-            The RData file has to include a data frame with the following variables and formats:<br>
-            <ul>
-            <samp>
-            'data.frame':	x obs. of  y variables: <br>
-            $ SUBJIDN : int   <br>
-            $ AVISIT  : Factor  <br>
-            $ TRTP    : Factor  <br>
-            $ LBTESTCD: Factor <br>
-            $ LBORRES : num   <br>
-            $ LBORNRLO: chr   <br>
-            $ LBORNRHI: chr  <br> </samp></ul> </li>
             </ul><br>
 
             <h4>File Structure</h4>
@@ -766,7 +836,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
             <li> Variable names must be spelled correctly as shown above (please use upper case letters). </li>
             <li> Do not use special characters for variable names or laboratory parameter names. </li>
             <li> All laboratory measurements have to be numeric. That means, do not use '+', '-', '>', '<', 'negative' etc. For example, '<1' is not a valid laboratory measurement. </li>
-            <li> <b> Please always check your data carefully before uploading it to the e<b>lab</b>orator.  </b></li>
+            <li> <b> Please always check your data carefully before uploading it to the e<b>lab</b>orator.  </b> You can also inspect the data loaded in the e<b>lab</b>orator app via the &nbsp; <i class='fa fa-file-lines'></i> <b> Raw Data</b>-tab. </li>
             </ul>
 
             "
@@ -789,17 +859,18 @@ elaborator_ui <- shinydashboard::dashboardPage(
             <li> Reference-value based pattern analysis </li></ul>
 
 
-            You can find a concept description of each type of analysis in the following. Available graphic options as well as missing data handling are described below. <br>
+            You can find a concept description of each type of analysis in the following. Available graphic and filter options as well as missing data handling are described below. <br>
 
             <br>
             <h4><i class='fa fa-chart-line'></i><b><i> &nbsp;Quantitative Trends</i></b></h4>
             Aim: Examine changes in laboratory values across study visits and explore whether changes differ between treatment groups. <br><br>
 
-            This type of analysis depicts the distribution of laboratory parameters in each study visit. An example is shown in Figure 1. Figure 1 shows the distribution of platelets (in giga/l) in the 2 mg dose group at all four visits during a study ('Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'). Distributions are shown using boxplots. The middle 50% of patient-specific values fall inside the box. The median value is represented by the horizontal line crossing through the box and might be used as an indicator for the central tendency. Changes over time can be easily detected by a shift in the boxplots along the y-axis. In this example, a  decrease in platelets is observed until the End of Treatment-Visit followed by a subsequent increase between the End of Treatment-Visit and the Follow-Up 3-Visit. <br><br>
+            This type of analysis depicts the distribution of laboratory parameters in each study visit. An example is shown in Figure 1. Figure 1 shows the distribution of platelets (in giga/l) in the 2 mg dose group at all four visits during a study ('Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'). Distributions are shown using boxplots. The middle 50% of patient-specific values fall inside the box. The median value is represented by the horizontal line crossing through the box and might be used as an indicator for the central tendency. The whiskers indicate the variability in the values. The upper whisker is derived as the smaller of the maximum observed laboratory value and the third quartile (i.e. upper limit of the box) + 1.5 x interquartile range. The upper whisker is derived as the larger of the minimum observed laboratory value and the first quartile (i.e. lower limit of the box) - 1.5 x interquartile range. Values outside of the box and whiskers (outliers) are indicated as filled points. <br>
+            Changes over time can be easily detected by a shift in the boxplots along the y-axis. In this example, a  decrease in platelets is observed until the End of Treatment-Visit followed by a subsequent increase between the End of Treatment-Visit and the Follow-Up 3-Visit. <br><br>
 
             <img src='www/Fig1.png' alt='Graphic cannot be displayed' width='300' height='300'>
             <p> <i><b>Figure 1</b>: Example plot for quantitative trends analysis. The distribution of platelets (in giga/l) is shown for the 2 mg dose group at four study visits 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'. Normal range, i.e. upper limit of normal and lower limit of normal, are indicated by dotted horizontal lines. </i></p>
-            Click the 'Open/Close Zoom Panel'-button and use the mouse to hover over a specific plot. The respective plot is be shown in a larger window. Further options are described below.
+            Click the 'Open/Close Zoom Panel'-button and use the mouse to hover over a specific plot (if option 'hover' is selected within the zoom panel) or, alternatively, click on a selected plot (if option 'click' is selected) to see an enlarged version. Further options are described below.
 
 
             <ul>
@@ -811,8 +882,8 @@ elaborator_ui <- shinydashboard::dashboardPage(
             <li> <h6><b>Patient-specific values</b></h6>
             You can permit or plot patient-specific values. When permitted (default), patient-specific values will be added as circles to the boxplots.
             Note that outliers are indicated through dots and 'belong' to the boxplot (i.e. you can not suppress showing outliers). Moreover, you can choose whether patient-specific values are sorted
-            from smallest to largest (default). When 'draw connection lines' is ticked, the patients measurements at
-            study visits are connected. A blue connection line indicates a decrease, and an orange
+            from smallest to largest (default). When 'draw connection lines' is ticked, the patients' measurements at
+            study visits are connected. This option can be useful in particular for small patient numbers. A blue connection line indicates a decrease, and an orange
             connection line indicates an increase in the values.</li>
 
             <li> <h6><b>Test for explorative trend detection</b></h6>
@@ -840,8 +911,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
             When a time course does not occur at all (i.e. the frequency and percentage are 0), the entries of the cell are not shown by default.
             <br>
             The frequency of a time course is shown by the color of the cell.
-            Darker colors reflect more frequent and lighter colors less frequent time courses. The color key is provided on the right side of Figure 2.  <br><br>
-            It can also be suppressed by clicking on the 'Open/close'-button above the color legend.
+            Darker colors reflect more frequent and lighter colors less frequent time courses. The color key is provided on the right side of Figure 2. It can also be suppressed by clicking on the 'Open/close'-button above the color legend.
             No more than approx. 5 visits are recommended because diagrams will get too complex with increasing number of cells.<br>
 
             <img src='www/Fig2.png' alt='Graphic cannot be displayed' width='500' height='350'>
@@ -887,11 +957,12 @@ elaborator_ui <- shinydashboard::dashboardPage(
             the second visit, and so on. An example for a specific laboratory parameter in the placebo group is shown in Figure 3. You are able to track patients during the trial, and identify at which visits abnormal laboratory values occur. From the starting
             point the sample is split up into two groups: one group with patients who have laboratory values outside the normal range at the first visit (lower path / orange circle)
             and the other group of patients with laboratory values inside the normal range at the first visit (upper path / green circle). Each of the groups is then split
-            up based on the laboratory values at the second visit, and so on. <br>
+            up based on the laboratory values at the second visit, and so on. Note that patients may have different normal ranges for the same laboratory parameter. <br>
             The size of the circles is proportional to the number of patients. This enables users to identify frequent patterns (e.g. normal - abnormal - abnormal - normal) among visits.
             The total number of patients is depicted inside the circle at the starting point. <br><br>
 
             No more than approx. 5 visits are recommended because tree structures will get too complex with an increasing number of layers.<br>
+            Laboratory parameters without reference range(s) are not analysed. Thus, for the reference-value based pattern analysis the total number of plots shown might be smaller than for the other two analyses types.<br>
 
             <img src='www/Fig3.png' alt='Graphic cannot be displayed' width='350' height='400'>
             <p> <i><b>Figure 3</b>: Example plot for reference-value based pattern analysis. The number of patients with hematocrit (HCT) values within the reference range(green) or outside the reference range(orange) at four visits, 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3', for the placebo group are shown. </i></p>
@@ -918,18 +989,20 @@ elaborator_ui <- shinydashboard::dashboardPage(
           ),
           shiny::actionLink("link_to_structure_info", "Data Manual"),
           HTML(
-            "-tab. Options for omitting laboratory parameters, treatment groups or visits are described below. <br>
+            "-tab. You can inspect the data uploaded to the e<b>lab</b>orator via the &nbsp; <i class='fa fa-file-lines'></i> <b> Raw Data</b>-tab. Searching for specific data points is possible within this tab by filtering and sorting options in the header of the table. <br>
+
+            Options for omitting laboratory parameters, treatment groups or visits are described below. Whenever changing options, please click on 'Create/Update graphs' to refresh the plots.  <br>
 
             <ul>
             <li>
             <h6><b>Visits (exclude and rearrange)</b></h6>
-            Click the 'x' next to the visit to remove visits. Please note that visits will be removed for every laboratory parameter. There is no possibility to include the visit for some laboratory parameters but to exclude it for others (expect for manually setting the values to NA in your data file for the respective laboratory parameter).
+            Click the 'x' next to the visit to remove visits. Please note that this will remove the visit for all laboratory parameters. There is no possibility to include the visit for some laboratory parameters but to exclude it for others (expect for manually setting the values to NA in your data file for the respective laboratory parameter).
             Drag and drop visits to change the order of the visits in the three types of analyses.</li>
 
             <li>
             <h6><b>Treatment groups (exclude and rearrange)</b></h6>
             Click the 'x' next to the treatment group to remove treatment groups.
-            Drag and drop visits to change the order of the visits in the three types of analyses.</li>
+            Drag and drop treatment groups to change the order of the treatment groups in the three types of analyses.</li>
 
             <li>
             <h6><b>Lab parameters</b></h6>
@@ -937,12 +1010,22 @@ elaborator_ui <- shinydashboard::dashboardPage(
             If you want to change the order of the laboratory parameters, please see the section below on 'Graphic Options'.</li>
             </ul><br>
 
+            <h4><i class='fa fa-filter'></i> <b> Filter </b></h4>
+
+            If you want to see only results for a specific subgroup of patients, you can use the filter-tab. Note that filtering based on treatment groups, visits or laboratory parameters can also be performed within the &nbsp; <i class='fa fa-file-upload'></i> <b> Data Upload</b>-tab.<br><br>
+
+            In the first step you can choose the variable which you would like to filter on. You can apply several filters by selecting multiple filter variables. When having finished the selection of filter variables, click on '+Add'.
+            A menu will appear which enables the selection of categories (for categorical filter variables) or ranges (for continuous filter variables) for each of the selected filtering variables.<br>
+
+            Click on 'Apply Filter Selection' if you have finalized your selection.
+            The progress bar at the top shows the approximate percentage of completion. If it shows 100% completion, you can inspect the results based on the selected filter options by selecting the desired analysis tab and refresh the plots by clicking on 'Create/Update graphs'.
+            <br><br>
 
 
             <h4><i class='fa fa-cogs'></i> <b>Graphic Options</b></h4>
             The following graphic options are available:
             <ul><li> <h6> <i class='fa fa-arrows-alt'></i><b>&nbsp; Panel/Plot Size</b></h6>
-            Adjust the plot size and height by using the sliders and click the 'Create/Update Plots'-button to reload the plots. </li>
+            Adjust the plot size and height by using the sliders and click the 'Create/Update graphs'-button to reload the plots. </li>
 
             <li><h6><i class='fa fa-sort-alpha-down'> </i><b>&nbsp; Arrange Lab Parameters</b></h6>
             Use one of three options to change the arrangement of laboratory parameters in the three types of analyses. The following options are available to arrange laboratory parameters:
@@ -981,9 +1064,9 @@ elaborator_ui <- shinydashboard::dashboardPage(
             For example, if a specific laboratory parameter is missing at a specific visit for 40% of the subjects, then the analyses can only use
             the remaining 60% of subjects with non-missing values for that visit (assuming no missing values for the remaining subjects at any of the other visits). A single visit with many missing values can therefore reduce the number of evaluable patients drastically.
             If you want to avoid the exclusion of too many subjects due to a large percentage of missing values at a specific visit (and accept the omission of visits instead), you can set the
-            percentage of 'tolerated' missing values (which is by default set to 50%) to a small value.<br> <br>
+            percentage of 'tolerated' missing values (which is by default set to 50%) to a small value (down to 25%, which is the smallest possible value).<br> <br>
 
-            You can check the number of patients per treatment group used for all analyses of a specific laboratory parameters in the 'Reference-value Based Pattern' analysis: the number in the 'starting point', i.e. the root of the tree-like structures, shows the total patient number used for the analysis of a specific treatment group and laboratory parameter.
+            You can check the number of patients per treatment group used for all analyses of a specific laboratory parameters by clicking on the 'Open/Close Zoom Panel'. In the lower part detailed information about the numbers used for the analysis of a specific laboratory parameter is shown as well as missing values at each considered visit.
             Note that the number of subjects analyzed might differ between the laboratory parameters because the laboratory parameters are analyzed independently of each other.<br><br>
 
             The following example illustrates which subjects and visits will be used in the analysis if missing data exist. <br>
@@ -1141,7 +1224,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
               shiny::fluidRow(
                 shiny::column(2,
                   bsplus::bs_embed_tooltip(
-                    tag = h4(span(shiny::tagList("Font size", icon("question")))),
+                    tag = h5(span(shiny::tagList("Font size", icon("question")))),
                     title = "Adapt font size. Set font size to 0 to exclude any text.",
                     placement = "top",
                     expanded = TRUE
@@ -1157,7 +1240,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                 ),
                 shiny::column(2,
                   bsplus::bs_embed_tooltip(
-                    tag = h4(span(shiny::tagList("Choose method for defining stability", icon("question")))),
+                    tag = h5(span(shiny::tagList("Choose method for defining stability", icon("question")))),
                     title = "You can specify a tolerated difference in which a change in two adjacent lab values are considered stable ('='). This tolerated difference can be derived as a (small) percentage of the interquartile range (IQR), the range or the reference range. The IQR and the range is evaluated at the first visit across all treatment groups.",
                     placement = "bottom",
                     expanded = TRUE
@@ -1175,7 +1258,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                   )
                 ),
                 shiny::column(2,
-                  bsplus::bs_embed_tooltip(tag = h4(span(shiny::tagList("Select percentage", icon("question")))),
+                  bsplus::bs_embed_tooltip(tag = h5(span(shiny::tagList("Select percentage", icon("question")))),
                     title = "Select a percent value in the method chosen in order to derive the critical boundary. If set to 0, then adjacent lab values must be exactly equal in order to be considered stable.",
                     placement = "top",
                     expanded = TRUE
@@ -1190,7 +1273,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                   )
                 ),
                 shiny::column(2,
-                  bsplus::bs_embed_tooltip(tag = h4(span(shiny::tagList("Select a color scale", icon("question")))),
+                  bsplus::bs_embed_tooltip(tag = h5(span(shiny::tagList("Select a color scale", icon("question")))),
                     title = "Select your favorite color scale used for highlighting frequent patterns.", placement = "top", expanded = TRUE
                   ),
                   shinyWidgets::pickerInput(
@@ -1253,8 +1336,137 @@ elaborator_ui <- shinydashboard::dashboardPage(
           )
         )
       ),
-      shinydashboard::tabItem(
-        tabName = "rvbp",
+      shinydashboard::tabItem(tabName = "filter",
+        shiny::fluidPage(
+          shiny::conditionalPanel(condition = "output.flag == false",
+            shiny::HTML(
+              "<img src = 'www/BAY_eLaborator_Logo.svg'
+              alt = 'Graphic cannot be displayed'
+              width = '682'
+              height = '286'>"
+            ),
+            h2(
+              "is a novel concept for generating knowledge and gaining insights into laboratory data. You will be able to efficiently and easily explore your laboratory data
+              from different perspectives."
+            ),
+            br(),
+            tags$div(
+              HTML(
+                paste(
+                  "<i class='fa fa-file-upload'></i>&emsp;",
+                  tags$span(
+                    style = "font-size:150%",
+                    "Upload your",
+                    tags$span(style = "color:#f78300", "laboratory data"),
+                    " by using the 'Data Upload'-tab in the task bar on the left.
+                    Select the file format and click
+                    the 'Browse...'-button.",
+                    sep = ""
+                  )
+                )
+              )
+            ),
+            tags$div(
+              HTML(
+                paste(
+                  "<i class= 'fa fa-file'></i>&emsp;",
+                  tags$span(style = "font-size:150%","Click the 'Data Manual'-tab for the required format and structure for laboratory data file.")
+                )
+              )
+            ),
+            tags$div(
+              HTML(
+                paste("<i class='fa fa-info'></i>&emsp;",
+                  tags$span(style = "font-size:150%"," If you want to access information on the elaborator, click the 'Information'-tab.", sep = "")
+                )
+              )
+            )
+          ),
+          shiny::conditionalPanel(condition = "output.flag == true",
+            shiny::uiOutput("filter_percentage"),
+            shiny::uiOutput("pickerinput_filter"),
+            shiny::fluidRow(
+              shiny::column(4,
+                tags$head(tags$style(HTML('#insertBtn{background-color:#47d2bc;border-color: #000000;}'))),
+                shiny::actionButton(
+                  inputId = "insertBtn",
+                  label = "Add",
+                  icon = icon("plus")
+                )
+              ),
+              shiny::column(4,
+                tags$head(tags$style(HTML('#removeBtn{background-color:#ffeeaa;border-color: #000000;}'))),
+                shiny::actionButton(
+                  inputId = "removeBtn",
+                  label = "Delete",
+                  icon = icon("minus")
+                )
+              )
+            ),
+            shiny::tags$div(id = "placeholder"),
+              shiny::actionButton(
+                inputId = "apply",
+                label = "Apply Filter Selection!",
+                icon = icon("redo"),
+                style = "color: #fff; background-color: #f78300; border-color: #fff"
+            )
+          )
+        )
+      ),
+      shinydashboard::tabItem(tabName = "raw_data",
+        shiny::fluidPage(
+          shiny::conditionalPanel(condition = "output.flag == false",
+            shiny::HTML(
+              "<img src = 'www/BAY_eLaborator_Logo.svg'
+              alt = 'Graphic cannot be displayed'
+              width = '682'
+              height = '286'>"
+            ),
+            h2(
+              "is a novel concept for generating knowledge and gaining insights into laboratory data. You will be able to efficiently and easily explore your laboratory data
+              from different perspectives."
+            ),
+            br(),
+            tags$div(
+              HTML(
+                paste(
+                  "<i class='fa fa-file-upload'></i>&emsp;",
+                  tags$span(style = "font-size:150%",
+                    "Upload your",
+                    tags$span(style = "color:#f78300", "laboratory data"),
+                    " by using the 'Data Upload'-tab in the task bar on the left.
+                    Select the file format and click
+                    the 'Browse...'-button.",
+                    sep = ""
+                  )
+                )
+              )
+            ),
+            tags$div(
+              HTML(
+                paste(
+                  "<i class= 'fa fa-file'></i>&emsp;",
+                  tags$span(style = "font-size:150%","Click the 'Data Manual'-tab for the required format and structure for laboratory data file.")
+                )
+              )
+            ),
+            tags$div(
+              HTML(
+                paste(
+                  "<i class='fa fa-info'></i>&emsp;",
+                  tags$span(style = "font-size:150%"," If you want to access information on the elaborator, click the 'Information'-tab.", sep = "")
+                )
+              )
+            )
+          ),
+          shiny::conditionalPanel(condition = "output.flag == true",
+            DT::DTOutput(
+              'raw_data_table'
+            )
+          )
+        )
+      ),
+      shinydashboard::tabItem(tabName = "rvbp",
         shiny::fluidPage(
           shiny::conditionalPanel(condition = "output.flag == false",
             shiny::HTML(
@@ -1311,7 +1523,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                 bsplus::use_bs_popover(),
                 bsplus::use_bs_tooltip(),
                 bsplus::bs_embed_tooltip(
-                  tag = h4(span(shiny::tagList("Font size", icon("question")))),
+                  tag = h5(span(shiny::tagList("Font size", icon("question")))),
                   title = "Adapt font size. Set font size to 0 to suppress any text.",
                   placement = "top",
                   expanded = TRUE
@@ -1329,14 +1541,14 @@ elaborator_ui <- shinydashboard::dashboardPage(
                 bsplus::use_bs_popover(),
                 bsplus::use_bs_tooltip(),
                 bsplus::bs_embed_tooltip(
-                  tag = h4(span(shiny::tagList("Definition of abnormal values", icon("question")))),
+                  tag = h5(span(shiny::tagList("Definition of abnormal values", icon("question")))),
                   title = "Select how to define abnormal values based on the upper limit of normal (ULN) and lower limit of normal (LLN).",
                   placement = "top",
                   expanded = TRUE
                 ),
                 shinyWidgets::prettyRadioButtons(
                   inputId = "criterion",
-                  label = tags$div(tags$h4("")),
+                  label = tags$div(tags$h5("")),
                   choices = c(
                     "above ULN OR below LLN" = "within",
                     "above ULN" = "greater",
@@ -1350,7 +1562,7 @@ elaborator_ui <- shinydashboard::dashboardPage(
                 bsplus::use_bs_popover(),
                 bsplus::use_bs_tooltip(),
                 bsplus::bs_embed_tooltip(
-                  tag = h4(span(shiny::tagList("Factor multiplied with ULN or LLN", icon("question")))),
+                  tag = h5(span(shiny::tagList("Factor multiplied with ULN or LLN", icon("question")))),
                   title = "Define abnormal values in terms of ULN or LLN multiplied with a positive value. E.g. the factor 2
                   means that abnormal values are defined as values above 2xULN and/or below 2xLLN.",
                   placement = "top",
@@ -1441,3 +1653,4 @@ elaborator_ui <- shinydashboard::dashboardPage(
     )
   )
 )
+}
