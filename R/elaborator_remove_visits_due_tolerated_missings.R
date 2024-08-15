@@ -2,6 +2,7 @@ elaborator_remove_visits_due_tolerated_missings <- function(
   elab_data,
   tolerated_value
 ) {
+
 # create a variable with the percentage number of missing values for parameter/visit/treatment
 tmp <- elab_data %>%
   dplyr::group_by(LBTESTCD,AVISIT,TRTP) %>%
