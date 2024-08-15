@@ -1,5 +1,5 @@
 
-# e**lab**orator <a href='https://github.com/openpharma/elaborator'><img src='man/figures/eLaborator_logo.png' align="right" height="139" /></a>
+# e**lab**orator <a href='https://github.com/openpharma/elaborator'><img src='inst/www/eLaborator_logo.png' align="right" height="139" /></a>
 
 The e**lab**orator is a novel concept for generating knowledge and
 gaining insights into laboratory data. You will be able to efficiently
@@ -21,7 +21,7 @@ This type of analysis depicts the distribution of laboratory parameters in each 
 
 Changes over time can be easily detected by a shift in the boxplots along the y-axis. In this example, a  decrease in platelets is observed until the End of Treatment-Visit followed by a subsequent increase between the End of Treatment-Visit and the Follow-Up 3-Visit.
 
-<img src='www/Fig1.png' alt='Graphic cannot be displayed' width='300' height='300'>
+<img src='inst/www/Fig1.png' alt='Graphic cannot be displayed' width='300' height='300'>
 
 ## Qualitative Trends
 
@@ -34,7 +34,7 @@ In this way, the patterns / time courses for each patient can be derived and the
 
 The frequency of a time course is shown by the color of the cell. Darker colors reflect more frequent and lighter colors less frequent time courses. The color key is provided on the right side of Figure 2. It can also be suppressed by clicking on the 'Open/close'-button above the color legend.  No more than approx. 5 visits are recommended because diagrams will get too complex with increasing number of cells.
 
-<img src='www/Fig2.png' alt='Graphic cannot be displayed' width='500' height='350'>
+<img src='inst/www/Fig2.png' alt='Graphic cannot be displayed' width='500' height='350'>
 
 ## Reference-value Based Patterns
 
@@ -48,7 +48,7 @@ No more than approx. 5 visits are recommended because tree structures will get t
 
 Laboratory parameters without reference range(s) are not analysed. Thus, for the reference-value based pattern analysis the total number of plots shown might be smaller than for the other two analyses types.
 
-<img src='www/Fig3.png' alt='Graphic cannot be displayed' width='350' height='400'>
+<img src='inst/www/Fig3.png' alt='Graphic cannot be displayed' width='350' height='400'>
 
 
 ## Installation
@@ -130,6 +130,6 @@ save(dat,file="elab_example.RData")
 
 This data set can then be loaded within the e**lab**orator using the “Data Upload” functionality in the main menu on the left side of the application:
 
-<img src='man/figures/data_upload.png'/>
+<img src='inst/www/data_upload.png'/>
 
 Please refer to the publication mentioned above and the “Data Manual” and “Information” tab in the main menu within the application for further information on how to use the e**lab**orator.
