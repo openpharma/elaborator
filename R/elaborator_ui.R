@@ -1,11 +1,3 @@
-#' User Interface of the elaborator application
-#'
-#' @param id Internal parameters for {shiny}.
-#'
-#' @return No return value. User interface part of the app, used in launch_elaborator-function.
-#'
-#' @keywords internal
-
 colBoxplot4 <- "#004a8a"
 colBoxplot3 <- "#0075bc"
 colBoxplot2 <- "#00b4cb"
@@ -129,6 +121,14 @@ boxPlotColor <- function(input, output, session, dat, name, start_color, number)
     })
   )
 }
+
+#' User Interface of the elaborator application
+#'
+#' @param id Internal parameters for {shiny}.
+#'
+#' @return No return value. User interface part of the app, used in launch_elaborator-function.
+#'
+#' @keywords internal
 
 #### dashboardPage ####
 elaborator_ui <- function() {
