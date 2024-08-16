@@ -223,6 +223,59 @@ elaborator_server <- function(input, output, session) {
     )
   )
 
+  # Boxplots for raw data
+  #
+  # output$raw_data_plot_panel <- shiny::renderUI({
+  #   hpx <- shiny::isolate(data_param()$ntreat)
+  #   wpx <- shiny::isolate(data_param()$nlab)
+  #   zoompx <- shiny::isolate(input$zoompx)
+  #   panelheight <- shiny::isolate(input$panelheight)
+  #   shiny::fluidRow(
+  #     shiny::column(12,
+  #       shiny::wellPanel(style = paste0("background: ", ColorBG, ";overflow-x:scroll; max-height:", panelheight,"px"),
+  #         shiny::plotOutput(
+  #          outputId = 'raw_data_plot',
+  #          height = paste0(hpx * zoompx,'px'),
+  #          width = paste0(wpx * zoompx, 'px')
+  #         )
+  #       )
+  #     )
+  #   )
+  # })
+  #
+  # output$raw_data_plot <- shiny::renderPlot({
+  #
+  #   test_filt <- raw_data_and_warnings()$data
+  #   test_filt$LBTESTCD <- factor(test_filt$LBTESTCD)
+  #   test_filt$TRTP <- factor(test_filt$TRTP)
+  #   test_filt$AVISIT <- factor(test_filt$AVISIT)
+  #
+  #   elaborator_plot_quant_trends2(
+  #           elab_data = test_filt,
+  #
+  #           signtest = FALSE,
+  #           Visit1 = "Placebo",
+  #           Visit2 = "Visit 3",
+  #           labcolumn = "LBTESTCD",
+  #           cols = NULL,
+  #           pcutoff = 0.05,
+  #           sameaxes = FALSE,
+  #           sortpoints = FALSE,
+  #           labelvis = NULL,
+  #           infotest = NULL,
+  #           sortinput = levels(test_filt$LBTESTCD),
+  #           bordercol = NULL,
+  #           add_points = FALSE,
+  #           connect_lines = FALSE,
+  #           lin_data = NULL,
+  #           outliers = TRUE,
+  #           tolerated_percentage = 1,
+  #           color_lines_options ="first_last",
+  #           custom_visits = NULL
+  #         )
+  # }, res = shiny::isolate(input$zoompx) / 3
+  # )
+
   # Output Loading error message if available
   output$err_message <- renderText({
     if(!is.null(raw_data_and_warnings()$message)) {

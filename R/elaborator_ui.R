@@ -1595,7 +1595,9 @@ elaborator_ui <- function() {
           shiny::conditionalPanel(condition = "output.flag == true",
             DT::DTOutput(
               'raw_data_table'
-            )
+            )#,
+            #shiny::uiOutput('raw_data_plot_panel', width = 'auto'),
+            #plotOutput('raw_data_plot')
           )
         )
       ),

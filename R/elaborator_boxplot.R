@@ -54,7 +54,13 @@ elaborator_boxplot <- function(
                    border = NA, col = ColorBG, xpd = TRUE)
     graphics::text(0.5, 0.5, paste0("No values for this Treatment"))
   } else {
-
+   if (all(is.na(raw$LBORRES))) {
+    graphics::plot(NULL, NULL, ylim = c(0, 1), xlim = c(0, 1), axes = FALSE, ylab = "", xlab = "")
+    graphics::rect(xleft = graphics::grconvertX(0, 'ndc', 'user'), xright = graphics::grconvertX(1, 'ndc', 'user'),
+                   ybottom = graphics::grconvertY(0,'ndc','user'), ytop = graphics::grconvertY(1, 'ndc', 'user'),
+                   border = NA, col = ColorBG, xpd = TRUE)
+    graphics::text(0.5, 0.5, paste0("No values for this Treatment"))
+  } else {
   if (same_axes_per_treatment_logical) {
     if (outliers_logical) {
       tmp_ylim <- c(unique(max(raw$elaborator_treatment_min,raw$elaborator_treatment_low_outlier)),unique(min(raw$elaborator_treatment_max,raw$elaborator_treatment_upp_outlier)))
@@ -63,12 +69,12 @@ elaborator_boxplot <- function(
     }
   } else {
     if (outliers_logical) {
-      tmp_ylim_range <- range(raw$LBORRES)
-      tmp_ylim_outlier_range <- (quantile(raw$LBORRES,prob=0.75) - quantile(raw$LBORRES,prob=0.25)) * 5
-      tmp_ylim_outlier <- c(quantile(raw$LBORRES,prob=0.25)-tmp_ylim_outlier_range, quantile(raw$LBORRES,prob=0.75)+tmp_ylim_outlier_range)
+      tmp_ylim_range <- range(raw$LBORRES,na.rm=TRUE)
+      tmp_ylim_outlier_range <- (quantile(raw$LBORRES,prob=0.75,na.rm = TRUE) - quantile(raw$LBORRES,prob=0.25,na.rm = TRUE)) * 5
+      tmp_ylim_outlier <- c(quantile(raw$LBORRES,prob=0.25,na.rm = TRUE)-tmp_ylim_outlier_range, quantile(raw$LBORRES,prob=0.75,na.rm = TRUE)+tmp_ylim_outlier_range)
       tmp_ylim <- c(
-        max(tmp_ylim_outlier[1], tmp_ylim_range [1]),
-        min(tmp_ylim_outlier[2], tmp_ylim_range [2])
+        max(tmp_ylim_outlier[1], tmp_ylim_range [1],na.rm = TRUE),
+        min(tmp_ylim_outlier[2], tmp_ylim_range [2],na.rm = TRUE)
       )
     } else {
       tmp_ylim <- range(raw$LBORRES)
@@ -118,7 +124,7 @@ elaborator_boxplot <- function(
     dplyr::pull(LBORRES) %>%
     dplyr::between(tmp_ylim[1],tmp_ylim[2])
 
-  if (any(!which.outlier)) {
+  if (any(!which.outlier,na.rm = TRUE)) {
     index <- which(!which.outlier)
   }
 
@@ -322,7 +328,7 @@ elaborator_boxplot <- function(
    shiny::incProgress(1/number_plots, detail = paste(""))
   }
   }
-
+  }
     if (elab_data$LBTESTCD == levels(elab_data$LBTESTCD)[1]) {
     mtext(elab_data$TRTP, side = 2, line = 3, cex = 1.1)
   }
