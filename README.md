@@ -23,7 +23,7 @@ Changes over time can be easily detected by a shift in the boxplots along the y-
 
 <a name="fig1"></a>
 <figure>
-<img src='inst/www/Fig1.png' alt='Graphic cannot be displayed' width='300' height='300'>
+<img src='inst/www/Fig1.png' alt='Graphic cannot be displayed' width='368' height='300'>
 <figcaption>
 <b>Figure 1</b>: <i>Example plot for quantitative trends analysis. The distribution of platelets (in giga/l) is shown for the 2 mg dose group at four study visits 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'. Normal range, i.e. upper limit of normal and lower limit of normal, are indicated by dotted horizontal lines. </i>
 </figcaption>
@@ -42,7 +42,7 @@ The frequency of a time course is shown by the color of the cell. Darker colors 
 
 <a name="fig2"></a>
 <figure>
-<img src='inst/www/Fig2.png' alt='Graphic cannot be displayed' width='500' height='350'>
+<img src='inst/www/Fig2.png' alt='Graphic cannot be displayed' width='540' height='350'>
 <figcaption>
 <b>Figure 2</b>: <i>Example plot for qualitative trends analysis (left) and color key (right). Frequent patterns of increases/decreases in platelets between four subsequent study visits within the 2mg dose group are shown. The background of the cell is colored depending on the frequency of the respective pattern (cf. color key).</i>
 </figcaption>
@@ -62,7 +62,7 @@ Laboratory parameters without reference range(s) are not analysed. Thus, for the
 
 <a name="fig3"></a>
 <figure>
-<img src='inst/www/Fig3.png' alt='Graphic cannot be displayed' width='350' height='400'>
+<img src='inst/www/Fig3.png' alt='Graphic cannot be displayed' width='411' height='400'>
 <figcaption>
 <b>Figure 3</b>: <i>Example plot for reference-value based pattern analysis. The number of patients with hematocrit (HCT) values within the reference range(green) or outside the reference range(orange) at four visits, 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3', for the placebo group are shown. </i>
 </figcaption>
