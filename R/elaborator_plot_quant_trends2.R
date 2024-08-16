@@ -53,14 +53,33 @@ elaborator_plot_quant_trends2 <- function(
   custom_visits = NULL
 ) {
 
-
   num <- (length((levels(elab_data$TRTP)))*
-    length(unique(elab_data$LBTESTCD)))
+    length(levels(elab_data$LBTESTCD)))
 
+  if (num == 0){
+      graphics::par(
+      mfrow = c(
+        1,
+        1
+      ),
+      bty = "n",
+      mar = c(1, 3, 1, 0),
+      oma = c((max(nchar(levels(elab_data$AVISIT)))/3), 2, 3, 0),
+      cex.main = 1.2,
+      bg = "#E2F3F2"
+    )
+    graphics::plot(NULL, NULL, ylim = c(0, 1), xlim = c(0, 1), axes = FALSE, ylab = "", xlab = "")
+    graphics::rect(xleft = graphics::grconvertX(0, 'ndc', 'user'), xright = graphics::grconvertX(1, 'ndc', 'user'),
+                   ybottom = graphics::grconvertY(0,'ndc','user'), ytop = graphics::grconvertY(1, 'ndc', 'user'),
+                   border = NA, col = ColorBG, xpd = TRUE)
+    graphics::text(0.5, 0.5, paste0("No values for this Treatment"))
+  } else {
   graphics::par(
     mfrow = c(
-      length((levels(elab_data$TRTP))),
-      length(unique(elab_data$LBTESTCD))
+      # length((levels(elab_data$TRTP))),
+      # length(levels(elab_data$LBTESTCD))
+
+      length((unique(elab_data$TRTP))), length(unique(elab_data$LBTESTCD))
     ),
     bty = "n",
     mar = c(1, 3, 1, 0),
@@ -111,6 +130,25 @@ elaborator_plot_quant_trends2 <- function(
     )
   }
 
+
+  combine <- expand.grid("TRTP" = levels(elab_data$TRTP),
+      "LBTESTCD" = levels(elab_data$LBTESTCD)) %>%
+    dplyr::group_by(TRTP,LBTESTCD) %>%
+    dplyr::left_join(combine, by = c("TRTP", "LBTESTCD"))
+
+  # get lab values which are missing for all treatment arms and remove these
+  missing_lab_values_over_all_trt <- combine %>%
+    dplyr::mutate(raw = purrr::map(raw,~ is.null(.))) %>%
+    unnest(cols = c(raw)) %>%
+    ungroup() %>%
+    pivot_wider(names_from = LBTESTCD, values_from = raw) %>%
+    dplyr::select(-TRTP)
+
+  missing_lab_values_over_all_trt <- names(missing_lab_values_over_all_trt)[apply(missing_lab_values_over_all_trt,2,function(x){!all(x)})]
+
+  combine <- combine %>% dplyr::filter(LBTESTCD %in% missing_lab_values_over_all_trt)
+
+
   if (num > 1) {
   shiny::withProgress(message = paste0('generating ', length(unique(elab_data$LBTESTCD))*length(unique(elab_data$TRTP)),' plots ...'), value = 0, {
     shiny::incProgress(0, detail = paste(""))
@@ -157,5 +195,6 @@ elaborator_plot_quant_trends2 <- function(
       custom_visit = custom_visits
     ), .keep = TRUE
   )
+  }
   }
 }
