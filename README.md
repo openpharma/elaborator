@@ -17,11 +17,17 @@ You can find a concept description of each type of analysis in the following. Av
 Aim: Examine changes in laboratory values across study visits and explore whether changes differ between treatment groups. 
 
 
-This type of analysis depicts the distribution of laboratory parameters in each study visit. An example is shown in Figure 1. Figure 1 shows the distribution of platelets (in giga/l) in the 2 mg dose group at all four visits during a study ('Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'). Distributions are shown using boxplots. The middle 50% of patient-specific values fall inside the box. The median value is represented by the horizontal line crossing through the box and might be used as an indicator for the central tendency. The whiskers indicate the variability in the values. The upper whisker is derived as the smaller of the maximum observed laboratory value and the third quartile (i.e. upper limit of the box) + 1.5 x interquartile range. The upper whisker is derived as the larger of the minimum observed laboratory value and the first quartile (i.e. lower limit of the box) - 1.5 x interquartile range. Values outside of the box and whiskers (outliers) are indicated as filled points.
+This type of analysis depicts the distribution of laboratory parameters in each study visit. An example is shown in [Figure 1](#fig1). Figure 1 shows the distribution of platelets (in giga/l) in the 2 mg dose group at all four visits during a study ('Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'). Distributions are shown using boxplots. The middle 50% of patient-specific values fall inside the box. The median value is represented by the horizontal line crossing through the box and might be used as an indicator for the central tendency. The whiskers indicate the variability in the values. The upper whisker is derived as the smaller of the maximum observed laboratory value and the third quartile (i.e. upper limit of the box) + 1.5 x interquartile range. The upper whisker is derived as the larger of the minimum observed laboratory value and the first quartile (i.e. lower limit of the box) - 1.5 x interquartile range. Values outside of the box and whiskers (outliers) are indicated as filled points.
 
 Changes over time can be easily detected by a shift in the boxplots along the y-axis. In this example, a  decrease in platelets is observed until the End of Treatment-Visit followed by a subsequent increase between the End of Treatment-Visit and the Follow-Up 3-Visit.
 
+<a name="fig1"></a>
+<figure>
 <img src='inst/www/Fig1.png' alt='Graphic cannot be displayed' width='300' height='300'>
+<figcaption>
+<b>Figure 1</b>: <i>Example plot for quantitative trends analysis. The distribution of platelets (in giga/l) is shown for the 2 mg dose group at four study visits 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3'. Normal range, i.e. upper limit of normal and lower limit of normal, are indicated by dotted horizontal lines. </i>
+</figcaption>
+</figure>
 
 ## Qualitative Trends
 
@@ -32,15 +38,21 @@ This type of analysis assesses frequent time courses that are described through 
 
 In this way, the patterns / time courses for each patient can be derived and the frequency of each pattern / time course can be counted. The time courses and frequencies are transferred to a diagram-like structure. Each cell of this diagram represents one specific pattern / time course. The time courses are arranged in a symmetric way within the diagram. For example, the time course '+ + +' is represented in the cell in the top, while the 'opposite' time course '- - -' is in the cell at the bottom of the diagram. There are three entries within each of the cells: the first and second entries show the absolute and relative number of subjects in the treatment group which have the specific time course, and the third entry shows the respective time course. You can use the font size slider to display the entries and increase the size of the numbers. By default, the font size is set to 0, that is, all entries are blocked. When a time course does not occur at all (i.e. the frequency and percentage are 0), the entries of the cell are not shown by default.
 
-The frequency of a time course is shown by the color of the cell. Darker colors reflect more frequent and lighter colors less frequent time courses. The color key is provided on the right side of Figure 2. It can also be suppressed by clicking on the 'Open/close'-button above the color legend.  No more than approx. 5 visits are recommended because diagrams will get too complex with increasing number of cells.
+The frequency of a time course is shown by the color of the cell. Darker colors reflect more frequent and lighter colors less frequent time courses. The color key is provided on the right side of [Figure 2](#fig2). It can also be suppressed by clicking on the 'Open/close'-button above the color legend.  No more than approx. 5 visits are recommended because diagrams will get too complex with increasing number of cells.
 
+<a name="fig2"></a>
+<figure>
 <img src='inst/www/Fig2.png' alt='Graphic cannot be displayed' width='500' height='350'>
+<figcaption>
+<b>Figure 2</b>: <i>Example plot for qualitative trends analysis (left) and color key (right). Frequent patterns of increases/decreases in platelets between four subsequent study visits within the 2mg dose group are shown. The background of the cell is colored depending on the frequency of the respective pattern (cf. color key).</i>
+</figcaption>
+</figure>
 
 ## Reference-value Based Patterns
 
 Aim: Assess how many patients have laboratory values outside the normal range during the study and whether there is a difference between treatment groups.
             
-The tree diagram consists of a starting point (i.e. the root of the tree) and several layers. The first layer represents the first visit, the second layer the second visit, and so on. An example for a specific laboratory parameter in the placebo group is shown in Figure 3. You are able to track patients during the trial, and identify at which visits abnormal laboratory values occur. From the starting point the sample is split up into two groups: one group with patients who have laboratory values outside the normal range at the first visit (lower path / orange circle) and the other group of patients with laboratory values inside the normal range at the first visit (upper path / green circle). Each of the groups is then split up based on the laboratory values at the second visit, and so on. Note that patients may have different normal ranges for the same laboratory parameter.
+The tree diagram consists of a starting point (i.e. the root of the tree) and several layers. The first layer represents the first visit, the second layer the second visit, and so on. An example for a specific laboratory parameter in the placebo group is shown in [Figure 3](#fig3). You are able to track patients during the trial, and identify at which visits abnormal laboratory values occur. From the starting point the sample is split up into two groups: one group with patients who have laboratory values outside the normal range at the first visit (lower path / orange circle) and the other group of patients with laboratory values inside the normal range at the first visit (upper path / green circle). Each of the groups is then split up based on the laboratory values at the second visit, and so on. Note that patients may have different normal ranges for the same laboratory parameter.
 
 The size of the circles is proportional to the number of patients. This enables users to identify frequent patterns (e.g. normal - abnormal - abnormal - normal) among visits. The total number of patients is depicted inside the circle at the starting point.
 
@@ -48,8 +60,13 @@ No more than approx. 5 visits are recommended because tree structures will get t
 
 Laboratory parameters without reference range(s) are not analysed. Thus, for the reference-value based pattern analysis the total number of plots shown might be smaller than for the other two analyses types.
 
+<a name="fig3"></a>
+<figure>
 <img src='inst/www/Fig3.png' alt='Graphic cannot be displayed' width='350' height='400'>
-
+<figcaption>
+<b>Figure 3</b>: <i>Example plot for reference-value based pattern analysis. The number of patients with hematocrit (HCT) values within the reference range(green) or outside the reference range(orange) at four visits, 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3', for the placebo group are shown. </i>
+</figcaption>
+</figure>
 
 ## Installation
 
