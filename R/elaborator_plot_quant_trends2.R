@@ -138,6 +138,7 @@ elaborator_plot_quant_trends2 <- function(
 
   # get lab values which are missing for all treatment arms and remove these
   missing_lab_values_over_all_trt <- combine %>%
+    dplyr::select(TRTP,LBTESTCD,raw) %>%
     dplyr::mutate(raw = purrr::map(raw,~ is.null(.))) %>%
     unnest(cols = c(raw)) %>%
     ungroup() %>%

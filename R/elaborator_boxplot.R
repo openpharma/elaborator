@@ -67,8 +67,8 @@ elaborator_boxplot <- function(
       tmp_ylim_outlier_range <- (quantile(raw$LBORRES,prob=0.75) - quantile(raw$LBORRES,prob=0.25)) * 5
       tmp_ylim_outlier <- c(quantile(raw$LBORRES,prob=0.25)-tmp_ylim_outlier_range, quantile(raw$LBORRES,prob=0.75)+tmp_ylim_outlier_range)
       tmp_ylim <- c(
-      max(tmp_ylim_outlier[1], tmp_ylim_range [1]),
-      min(tmp_ylim_outlier[2], tmp_ylim_range [2])
+        max(tmp_ylim_outlier[1], tmp_ylim_range [1]),
+        min(tmp_ylim_outlier[2], tmp_ylim_range [2])
       )
     } else {
       tmp_ylim <- range(raw$LBORRES)
@@ -322,6 +322,7 @@ elaborator_boxplot <- function(
    shiny::incProgress(1/number_plots, detail = paste(""))
   }
   }
+
     if (elab_data$LBTESTCD == levels(elab_data$LBTESTCD)[1]) {
     mtext(elab_data$TRTP, side = 2, line = 3, cex = 1.1)
   }

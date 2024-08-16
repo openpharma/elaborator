@@ -430,18 +430,19 @@ elaborator_server <- function(input, output, session) {
     tmp <- data_filtered_by_app_selection()
     if(shiny::isolate(input$orderinglab) == "asinp") {
       lab_levels <- unique(raw_data_and_warnings()$data$LBTESTCD)
+      lab_levels <- lab_levels[lab_levels %in% input$select.lab]
       tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
     } else if (shiny::isolate(input$orderinglab) =="alphabetically"){
       lab_levels <- sort(unique(raw_data_and_warnings()$data$LBTESTCD))
+      lab_levels <- lab_levels[lab_levels %in% input$select.lab]
       tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
     } else if (shiny::isolate(input$orderinglab) =="auto") {
       lab_levels <- shiny::isolate(lab_parameter_order_by_clustering())
-      # Thu Sep 28 11:13:35 2023 ------------------------------
       lab_levels <- c(lab_levels, as.character(unique(tmp$LBTESTCD)[which(!unique(tmp$LBTESTCD) %in% lab_levels)]))
       tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
-
     } else if(shiny::isolate(input$orderinglab) == "manual"){
       lab_levels <- input$arrange.lab
+      lab_levels <- lab_levels[lab_levels %in% input$select.lab]
       tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
     }
     tmp

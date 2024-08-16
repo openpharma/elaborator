@@ -28,8 +28,8 @@ elaborator_fill_with_missings <- function(
     elab_data %>% dplyr::group_by(
       LBTESTCD
     ) %>% dplyr::summarise(
-      elaborator_treatment_min = min(LBORRES),#, na.rm = TRUE),
-      elaborator_treatment_max = max(LBORRES),#, na.rm = TRUE),
+      elaborator_treatment_min = min(LBORRES, na.rm = TRUE),
+      elaborator_treatment_max = max(LBORRES, na.rm = TRUE),
       elaborator_treatment_low_quant = quantile(LBORRES, na.rm =TRUE, probs = 0.25),
       elaborator_treatment_upp_quant = quantile(LBORRES, na.rm =TRUE, probs = 0.75)
     ),
