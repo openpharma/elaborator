@@ -45,7 +45,7 @@ elaborator_derive_test_values2 <- function(
      for(i in 1:length(Visit2)) {
       for(treat in levels(data$TRTP)) {
         for (labpara in levels(as.factor(as.character(data[, lab_column])))) {
-          ttest <- elaborator_perform_binomial_test2(data = data, treatment = treat, lab_parameter = labpara, Visit1 = Visit1, Visit2 = Visit2[i], lab_column = lab_column)
+          ttest <- elaborator_perform_binomial_test(data = data, treatment = treat, lab_parameter = labpara, Visit1 = Visit1, Visit2 = Visit2[i], lab_column = lab_column)
            if (any(!is.na(ttest))) {
              infotest[[i]]$p.value[which(levels(as.factor(as.character(data[, lab_column]))) == labpara), which(levels(data$TRTP) == treat)] <- ttest$p.value
              infotest[[i]]$estimate[which(levels(as.factor(as.character(data[, lab_column]))) == labpara), which(levels(data$TRTP) == treat)] <- ttest$estimate

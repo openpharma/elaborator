@@ -5,6 +5,7 @@
 #' @description
 #' Starts the elaborator application in the client's browser.
 #'
+#' @param elaborator_data data derived for the elaborator app
 #' @param host host link (defaults to the local machine "127.0.0.1")
 #' @param port port number (randomly chosen unless specified as a certain number)
 #' @param browser path to browser exe (defaults to standard browser)

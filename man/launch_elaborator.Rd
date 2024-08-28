@@ -12,6 +12,8 @@ launch_elaborator(
 )
 }
 \arguments{
+\item{elaborator_data}{data derived for the elaborator app}
+
 \item{host}{host link (defaults to the local machine "127.0.0.1")}
 
 \item{port}{port number (randomly chosen unless specified as a certain number)}

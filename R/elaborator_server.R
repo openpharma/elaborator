@@ -8,8 +8,12 @@
 
 elaborator_server <- function(input, output, session) {
 
+  LBTESTCD <- TRTP <- AVISIT <- orderinglab <- median_value <- NULL
+  LBORRES_diff <- SUBJIDN <- visits_non_missing <- tr <- data <- nonmissing <- tot <- NULL
+  percentage <- trt <- LBTESTCD <- nonmiss <- nr_visits <- . <- LBORRES <- NULL
+  LBORNRLO <- non_missing_values <- LBORNRHI <- highref <- lowref <- InQuRa <- NULL
+  Range <- refRange <- LBORRES.y <- visit_removed <- all_complete <- LBORRES.x <- vari <- js <- NULL
 
-  LBTESTCD <- TRTP <- AVISIT <- orderinglab <- median_value <- LBORRES_diff <- SUBJIDN <- tr <- data <- nonmissing <- tot <- percentage <- trt <- LBTESTCD <- nonmiss <- nr_visits <- . <- LBORRES <- LBORNRLO <- LBORNRHI <- highref <- lowref <- InQuRa <- Range <- refRange <- LBORRES.y <- LBORRES.x <- vari <- js <- NULL
 
   #global settings
 

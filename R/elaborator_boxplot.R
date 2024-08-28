@@ -45,7 +45,7 @@ elaborator_boxplot <- function(
   col_lines_options,
   custom_visit
 ) {
-
+  LBORRES <- complete.cases <- AVISIT <- NULL
   raw <- elab_data$raw[[1]]
   if (is.null(raw)) {
     graphics::plot(NULL, NULL, ylim = c(0, 1), xlim = c(0, 1), axes = FALSE, ylab = "", xlab = "")

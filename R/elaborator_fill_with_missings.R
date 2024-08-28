@@ -1,6 +1,7 @@
 elaborator_fill_with_missings <- function(
   elab_data
 ){
+  SUBJIDN <- TRTP <- LBTESTCD <- LBORRES <- elaborator_treatment_low_quant <- elaborator_treatment_upp_quant <- NULL
   # create "empty" lab value data set for every subject, visit and lab parameter
   tmp_grid <- tidyr::crossing(
     SUBJIDN = unique(elab_data$SUBJIDN),

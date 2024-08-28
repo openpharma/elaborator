@@ -16,7 +16,8 @@ elaborator_create_hover_info_text <- function(
   treat,
   select.visit
 ) {
-
+  TRTP <- AVISIT <- LBTESTCD <- LBORRES <- SUBJIDN <- cause_visit_removed <- visit_removed <- number_subjects <- NULL
+  missing_values <- non_missing_values <- all_complete <- NULL
   ds_filtered <- elab_data %>% dplyr::filter(
     LBTESTCD == labparameter,
     TRTP == treat

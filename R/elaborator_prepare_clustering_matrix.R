@@ -3,7 +3,8 @@ elaborator_prepare_clustering_matrix <- function(
   first_variable,
   last_variable
 ) {
-  # Thu Feb 16 14:20:34 2023 ------------------------------
+    LBTESTCD <- TRTP <- LBORRES <- median_value <- SUBJIDN <- AVISIT <- NULL
+    LBORRES_diff <- vari <- NULL
       ### need to be checked:
       # tmp <- full_join(
       #   elab_data %>%
@@ -56,7 +57,7 @@ elaborator_prepare_clustering_matrix <- function(
           dplyr::select(-dplyr::one_of(c("SUBJIDN","AVISIT")))
 
         tmp <- tmp %>%
-          dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(., median(., na.rm=TRUE))))
+          dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), ~ tidyr::replace_na(., median(., na.rm=TRUE))))
 
         tmp_nam <- tmp %>%
           dplyr::select(vari)

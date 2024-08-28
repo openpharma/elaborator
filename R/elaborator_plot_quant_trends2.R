@@ -53,6 +53,7 @@ elaborator_plot_quant_trends2 <- function(
   custom_visits = NULL
 ) {
 
+  TRTP <- LBTESTCD <- NULL
   num <- (length((levels(elab_data$TRTP)))*
     length(levels(elab_data$LBTESTCD)))
 

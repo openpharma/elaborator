@@ -16,6 +16,7 @@
 
 elaborator_perform_ttest2 <- function(data, treatment, lab_parameter, Visit1 = "Randomization", Visit2 = "End of Treatment", lab_column){
 
+  AVISIT <- LBORRES.x <- LBORRES.y <- TRTP <- LBTESTCD <- NULL
   datasub <- data[data$TRTP == treatment & data[,lab_column] == lab_parameter,]
 
   tmp <- dplyr::full_join(datasub %>% dplyr::filter(AVISIT == Visit1) %>% dplyr::select(-AVISIT),

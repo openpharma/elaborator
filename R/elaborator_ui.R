@@ -1,4 +1,6 @@
 #global settings
+SUBJIDN <- TRTP <- LBTESTCD <- NULL
+
 colBoxplot4 <- "#004a8a"
 colBoxplot3 <- "#0075bc"
 colBoxplot2 <- "#00b4cb"
@@ -66,6 +68,8 @@ boxPlotColorUI <- function(id) {
 
 # Shiny Module for boxplot Color (Server Part)
 boxPlotColor <- function(input, output, session, dat, name, start_color, number) {
+
+
   ns <- session$ns
   output$controls <- shiny::renderUI({
 
@@ -133,6 +137,7 @@ boxPlotColor <- function(input, output, session, dat, name, start_color, number)
 
 #### dashboardPage ####
 elaborator_ui <- function() {
+
   shinydashboard::dashboardPage(
   title = "elaborator",
   shinydashboard::dashboardHeader(
