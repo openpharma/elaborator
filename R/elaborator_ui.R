@@ -1,3 +1,4 @@
+#global settings
 colBoxplot4 <- "#004a8a"
 colBoxplot3 <- "#0075bc"
 colBoxplot2 <- "#00b4cb"
@@ -524,12 +525,12 @@ elaborator_ui <- function() {
                       )),
                       value = FALSE
                     ),
-                      shiny::conditionalPanel(condition = "input.add_points == true",
-                        shiny::checkboxInput(
-                          inputId = "sortpoint",
-                          label = "Sort patient-specific values",
-                          value = FALSE
-                        )
+                    shiny::conditionalPanel(condition = "input.add_points == true",
+                      shiny::checkboxInput(
+                        inputId = "sortpoint",
+                        label = "Sort patient-specific values",
+                        value = FALSE
+                      )
                     ),
                     shiny::checkboxInput(
                       inputId = "con_lin",

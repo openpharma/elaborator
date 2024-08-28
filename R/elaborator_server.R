@@ -11,6 +11,8 @@ elaborator_server <- function(input, output, session) {
 
   LBTESTCD <- TRTP <- AVISIT <- orderinglab <- median_value <- LBORRES_diff <- SUBJIDN <- tr <- data <- nonmissing <- tot <- percentage <- trt <- LBTESTCD <- nonmiss <- nr_visits <- . <- LBORRES <- LBORNRLO <- LBORNRHI <- highref <- lowref <- InQuRa <- Range <- refRange <- LBORRES.y <- LBORRES.x <- vari <- js <- NULL
 
+  #global settings
+
   colBoxplot4 <- "#004a8a"
   colBoxplot3 <- "#0075bc"
   colBoxplot2 <- "#00b4cb"
@@ -68,7 +70,6 @@ elaborator_server <- function(input, output, session) {
     'sequential yellow - orange - brown'= list('col' = brewer.pal(9, 'YlOrBr'),'gradient' = TRUE),
     'sequential yellow - orange - red'  = list('col' = brewer.pal(9, 'YlOrRd'),'gradient' = TRUE)
   )
-
 
   #### Import data ####
   output$impdata <- shiny::renderUI({
@@ -188,15 +189,23 @@ elaborator_server <- function(input, output, session) {
       )
     }
 
+    #function to expand data by subject id, visits and lab parameter to
+    #avoid wrong calculations by tolerated missing function
     elaborator_expand_grid <- function(dat){
-      tmp <- expand.grid(unique(dat$SUBJIDN),unique(dat$AVISIT),unique(dat$LBTESTCD))
-      treatment <- dat %>% dplyr::select(SUBJIDN, TRTP) %>% distinct()
+      tmp <- expand.grid(unique(dat$SUBJIDN), unique(dat$AVISIT), unique(dat$LBTESTCD))
+      treatment <- dat %>%
+        dplyr::select(SUBJIDN, TRTP) %>%
+        distinct()
       colnames(tmp) <- c("SUBJIDN","AVISIT","LBTESTCD")
-      dat2 <- dat %>% dplyr::right_join(tmp, by = c("SUBJIDN","AVISIT","LBTESTCD")) %>% dplyr::select(-TRTP)
-      dat3 <- dat2 %>% dplyr::right_join(treatment, by = c("SUBJIDN"))
+      dat2 <- dat %>%
+        dplyr::right_join(tmp, by = c("SUBJIDN","AVISIT","LBTESTCD")) %>%
+        dplyr::select(-TRTP)
+      dat3 <- dat2 %>%
+        dplyr::right_join(treatment, by = c("SUBJIDN"))
       return(dat3)
     }
     if (!is.null(tmp$data)) {
+      #expand data with missing lab values
       tmp$data <- elaborator_expand_grid(dat = tmp$data)
     }
 
@@ -319,8 +328,6 @@ elaborator_server <- function(input, output, session) {
     } else {
       data_filt <- data
     }
-
-
     data_filt
   })
 
@@ -481,6 +488,7 @@ elaborator_server <- function(input, output, session) {
 
   data_with_selected_factor_levels <- shiny::eventReactive(c(data_filtered_by_app_selection(),input$go3),{
     tmp <- data_filtered_by_app_selection()
+    #re-level the lab parameter vector for arrangement within app
     if(shiny::isolate(input$orderinglab) == "asinp") {
       lab_levels <- unique(raw_data_and_warnings()$data$LBTESTCD)
       lab_levels <- lab_levels[lab_levels %in% input$select.lab]
@@ -766,7 +774,6 @@ elaborator_server <- function(input, output, session) {
           dat <- shiny::isolate(data_with_only_non_missings_over_visits())
           #dat <- shiny::isolate(data_with_selected_factor_levels())
 
-          # Mon Apr 15 08:38:36 2024 ------------------------------
           sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
           #sortin <- levels(dat$LBTESTCD)
           val <- shiny::isolate(values$default)
@@ -958,10 +965,8 @@ elaborator_server <- function(input, output, session) {
 
           dat <- shiny::isolate(data_with_only_non_missings_over_visits())
           #dat <- shiny::isolate(data_with_selected_factor_levels())
-          # Mon Apr 15 12:49:57 2024 ------------------------------
           sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
           #sortin <- levels(dat$LBTESTCD)
-          # Mon Apr 15 12:50:08 2024 ------------------------------
 
           val <- shiny::isolate(values$default)
           hover_treatment <- dat %>%
@@ -987,10 +992,10 @@ elaborator_server <- function(input, output, session) {
     }
   })
 
-    output$hover_info_text3 <- shiny::renderUI({
+  output$hover_info_text3 <- shiny::renderUI({
     input$apply_ref_plot
     #shiny::req(shiny::isolate(data_with_missing_flag()), input$plot_option_switch3)
-  shiny::req(shiny::isolate(data_with_missing_flag()), input$plot_option_switch3)
+    shiny::req(shiny::isolate(data_with_missing_flag()), input$plot_option_switch3)
 
     # switch between hover or click options for zoom panel
     if (input$plot_option_switch3 == "hover") {
@@ -1004,14 +1009,9 @@ elaborator_server <- function(input, output, session) {
         y <- plot_coords$coords_css$y
         x <- plot_coords$coords_css$x
         if (!is.null(y) && !is.null(x)) {
-          #dat <- shiny::isolate(data_with_missing_flag())
-          # dat <- shiny::isolate(data_filtered_by_app_selection())
 
           dat <- shiny::isolate(data_with_only_non_missings_over_visits())
-          #dat <- shiny::isolate(data_with_selected_factor_levels())
-          # Mon Apr 15 12:50:20 2024 ------------------------------
           sortin <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
-          #sortin <- levels(dat$LBTESTCD)
           val <- shiny::isolate(values$default)
           hover_treatment <- dat %>%
             dplyr::pull(TRTP) %>%
@@ -1036,8 +1036,6 @@ elaborator_server <- function(input, output, session) {
       HTML("")
     }
   })
-
-
 
   shiny::observe({
     output$hover2 <- shiny::renderPlot({
@@ -1059,14 +1057,6 @@ elaborator_server <- function(input, output, session) {
         dat <- data_with_only_non_missings_over_visits()
         Variab <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
 
-        # dat_filt <- dat %>%
-        #   dplyr::filter(
-        #     TRTP == dat %>%
-        #       dplyr::pull(TRTP) %>%
-        #       levels() %>%
-        #       .[ceiling(plot_coords$coords_css$y / input$zoompx)],
-        #     LBTESTCD == Variab[ceiling(plot_coords$coords_css$x / input$zoompx)]
-        #   )
         dat_filt <- dat[dat$TRTP == levels(dat$TRTP)[ceiling(plot_coords$coords_css$y/input$zoompx)] & dat$LBTESTCD == Variab[ceiling(plot_coords$coords_css$x / input$zoompx)] ,]
         dat_filt$TRTP <- factor(dat_filt$TRTP)
 
@@ -1217,24 +1207,13 @@ elaborator_server <- function(input, output, session) {
       if (plot_coords$coords_css$y > 0 & plot_coords$coords_css$x > 0
         & !is.na(input$abnormal_values_factor) & input$abnormal_values_factor >=0) {
 
-
-      # Thu Sep 28 07:38:41 2023 ------------------------------
       dat <- data_with_only_non_missings_over_visits()
-      #dat <- data_with_selected_factor_levels()
-
 
       dat <-  subset(dat,!(dat$LBORNRLO == "" & dat$LBORNRHI == ""))
 
       dat$LBTESTCD <- factor(dat$LBTESTCD)
 
-      #sorti <- levels(dat$LBTESTCD)
        sorti <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
-      # dat_filt <- dat %>%
-      #   dplyr::filter(TRTP == dat %>%
-      #                   dplyr::pull(TRTP) %>%
-      #                   levels() %>%
-      #                   .[ceiling(plot_coords$coords_css$y / input$zoompx)], LBTESTCD == sorti[ceiling(plot_coords$coords_css$x / input$zoompx)])
-      #
       dat_filt <- dat[dat$TRTP == levels(dat$TRTP)[ceiling(plot_coords$coords_css$y/input$zoompx)] & dat$LBTESTCD == sorti[ceiling(plot_coords$coords_css$x / input$zoompx)] ,]
 
 
@@ -1486,7 +1465,6 @@ elaborator_server <- function(input, output, session) {
       output$inoutPlot <- shiny::renderPlot({
 
         dat <- shiny::isolate(data_with_only_non_missings_over_visits())
-        #dat <- shiny::isolate(data_with_selected_factor_levels())
 
         dat <- subset(dat,!(dat$LBORNRLO == "" & dat$LBORNRHI == ""))
 
@@ -1540,18 +1518,10 @@ elaborator_server <- function(input, output, session) {
       output$trendPlot <- shiny::renderPlot({
         shiny::req(isolate(Summary_for_qualitative_trends()))
 
-        # Thu Sep 28 07:37:18 2023 ------------------------------
         dat <- shiny::isolate(data_with_only_non_missings_over_visits())
-        #dat <- shiny::isolate(data_with_selected_factor_levels())
 
         cex <- shiny::isolate(input$cex.trend)
-        # Thu Sep 28 09:51:29 2023 ------------------------------
         Variab <- levels(dat$LBTESTCD)[levels(dat$LBTESTCD) %in% unique(dat$LBTESTCD)]
-
-        # Variab <- unique(dat$LBTESTCD)
-        #Variab <- levels(dat$LBTESTCD)
-        # Thu Sep 28 09:53:54 2023 ------------------------------
-
 
         meth <- shiny::isolate(input$method)
         Summa  <- shiny::isolate(Summary_for_qualitative_trends())
