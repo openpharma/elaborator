@@ -1,3 +1,12 @@
+#' Transform data by removing visits with too many missing values in app elaborator
+#'
+#' @param elab_data data set
+#' @param tolerated_value numeric value with tolerated percentage value
+#'
+#' @return Transformed data frame
+#'
+#' @keywords internal
+
 elaborator_remove_visits_due_tolerated_missings <- function(
   elab_data,
   tolerated_value

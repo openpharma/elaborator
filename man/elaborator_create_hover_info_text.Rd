@@ -12,6 +12,8 @@ elaborator_create_hover_info_text(elab_data, labparameter, treat, select.visit)
 \item{labparameter}{labparameter used for filtering}
 
 \item{treat}{treatment used for filtering}
+
+\item{select.visit}{visit selection}
 }
 \value{
 character string with text about number of visits in every

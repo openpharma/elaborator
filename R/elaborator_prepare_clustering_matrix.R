@@ -1,3 +1,13 @@
+#' Transform data in form for cluster analysis in app elaborator
+#'
+#' @param elab_data data set
+#' @param first_variable character with variable name
+#' @param last_variable character with variable name
+#'
+#' @return Transformed data frame
+#'
+#' @keywords internal
+
 elaborator_prepare_clustering_matrix <- function(
   elab_data,
   first_variable,
@@ -5,26 +15,6 @@ elaborator_prepare_clustering_matrix <- function(
 ) {
     LBTESTCD <- TRTP <- LBORRES <- median_value <- SUBJIDN <- AVISIT <- NULL
     LBORRES_diff <- vari <- NULL
-      ### need to be checked:
-      # tmp <- full_join(
-      #   elab_data %>%
-      #     dplyr::filter(
-      #     AVISIT == first_variable
-      #   ) %>%
-      #     dplyr::select(SUBJIDN,LBTESTCD,AVISIT,LBORRES) %>%
-      #     dplyr::rename(first_variable = LBORRES),
-      #   elab_data %>%
-      #     dplyr::filter(
-      #     AVISIT == last_variable
-      #   ) %>%
-      #     dplyr::select(SUBJIDN,LBTESTCD,AVISIT,LBORRES) %>%
-      #     dplyr::rename(last_variable = LBORRES),
-      #   by = c("SUBJIDN","LBTESTCD","AVISIT")
-      # ) %>% dplyr::mutate(LBORRES_diff = first_variable-last_variable)
-      # tmp %>%
-      #     dplyr::select(LBTESTCD, AVISIT, SUBJIDN, LBORRES_diff) %>%
-      #     tidyr::spread(key = LBTESTCD, value = LBORRES_diff) %>%
-      #     dplyr::mutate(vari = paste0(SUBJIDN, "_", AVISIT)) %>%
 
       if (length(unique(elab_data$LBTESTCD)) > 1 && length(unique(elab_data$AVISIT)) > 1) {
         elab_data_tmp <- elab_data %>%

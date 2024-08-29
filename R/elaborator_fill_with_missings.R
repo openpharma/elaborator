@@ -1,3 +1,11 @@
+#' Transform data and fill them with missing values in app elaborator
+#'
+#' @param elab_data data set
+#'
+#' @return Transformed data frame
+#'
+#' @keywords internal
+
 elaborator_fill_with_missings <- function(
   elab_data
 ){
