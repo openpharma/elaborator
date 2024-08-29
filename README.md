@@ -1,6 +1,12 @@
 
 # e**lab**orator <a href='https://github.com/openpharma/elaborator'><img src='inst/www/eLaborator_logo.png' align="right" height="139" /></a>
 
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/elaborator)](https://cran.r-project.org/package=elaborator)
+[![CRAN total downloads](https://cranlogs.r-pkg.org/badges/grand-total/elaborator)](https://cranlogs.r-pkg.org/badges/grand-total/elaborator)
+[![status](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+<!-- badges: end -->
+
 The e**lab**orator is a novel concept for generating knowledge and
 gaining insights into laboratory data. You will be able to efficiently
 and easily explore your laboratory data from different perspectives.
