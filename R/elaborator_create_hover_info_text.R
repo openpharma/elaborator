@@ -3,6 +3,7 @@
 #' @param elab_data elaborator data
 #' @param labparameter labparameter used for filtering
 #' @param treat treatment used for filtering
+#' @param select.visit visit selection
 #'
 #' @keywords internal
 #'
@@ -16,7 +17,8 @@ elaborator_create_hover_info_text <- function(
   treat,
   select.visit
 ) {
-
+  TRTP <- AVISIT <- LBTESTCD <- LBORRES <- SUBJIDN <- cause_visit_removed <- visit_removed <- number_subjects <- NULL
+  missing_values <- non_missing_values <- all_complete <- NULL
   ds_filtered <- elab_data %>% dplyr::filter(
     LBTESTCD == labparameter,
     TRTP == treat

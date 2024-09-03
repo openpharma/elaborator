@@ -18,6 +18,8 @@ elaborator_calculate_test_for_all_visits <- function(
   pcutoff
 ) {
 
+  SUBJIDN <- AVISIT <- TRTP <- LBTESTCD <- LBORRES <- LBTESTCD <- TRTP <- NULL
+
   #transfer long format lab data to wide format by visits
   tmp <- elab_data %>%
     dplyr::select(SUBJIDN,AVISIT,TRTP,LBTESTCD,LBORRES) %>%

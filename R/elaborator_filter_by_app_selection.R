@@ -6,6 +6,7 @@ elaborator_filter_by_app_selection <- function(
     treat,
     labparameter
 ){
+  AVISIT <- LBTESTCD <- TRTP <- NULL
   filtered_elab_data <- elab_data %>%
     dplyr::filter(
       AVISIT %in% visits &
@@ -13,7 +14,6 @@ elaborator_filter_by_app_selection <- function(
       TRTP %in% treat
     )
 
-  # Mon Apr 15 10:38:00 2024 ------------------------------
   #add complete cases filter
   # 1.step filter for complete cases by selection
   # filtered_elab_data_complete <- filtered_elab_data %>%

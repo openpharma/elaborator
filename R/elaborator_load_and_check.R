@@ -8,7 +8,7 @@
 #' @param quote quote (for csv file upload only)
 #' @param decimal decimal (for csv file upload only)
 #'
-#' @return
+#' @return list with data and error message
 #'
 #' @keywords internal
 #'
@@ -138,7 +138,6 @@ elaborator_load_and_check <- function(
       error_message <- NULL
     }
 
-    # Fri Dec 30 14:36:17 2022 ------------------------------
     # add checks on data:
     #1. check for unique values in SUBJIDN/LBTESTCD/AVISIT
     if (is.null(error_message) & !is.null(elaborator_data)) {

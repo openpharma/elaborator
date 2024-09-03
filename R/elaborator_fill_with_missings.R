@@ -1,6 +1,15 @@
+#' Transform data and fill them with missing values in app elaborator
+#'
+#' @param elab_data data set
+#'
+#' @return Transformed data frame
+#'
+#' @keywords internal
+
 elaborator_fill_with_missings <- function(
   elab_data
 ){
+  SUBJIDN <- TRTP <- LBTESTCD <- LBORRES <- elaborator_treatment_low_quant <- elaborator_treatment_upp_quant <- NULL
   # create "empty" lab value data set for every subject, visit and lab parameter
   tmp_grid <- tidyr::crossing(
     SUBJIDN = unique(elab_data$SUBJIDN),
@@ -28,8 +37,8 @@ elaborator_fill_with_missings <- function(
     elab_data %>% dplyr::group_by(
       LBTESTCD
     ) %>% dplyr::summarise(
-      elaborator_treatment_min = min(LBORRES),#, na.rm = TRUE),
-      elaborator_treatment_max = max(LBORRES),#, na.rm = TRUE),
+      elaborator_treatment_min = min(LBORRES, na.rm = TRUE),
+      elaborator_treatment_max = max(LBORRES, na.rm = TRUE),
       elaborator_treatment_low_quant = quantile(LBORRES, na.rm =TRUE, probs = 0.25),
       elaborator_treatment_upp_quant = quantile(LBORRES, na.rm =TRUE, probs = 0.75)
     ),
