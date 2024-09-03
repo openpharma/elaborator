@@ -74,16 +74,20 @@ Laboratory parameters without reference range(s) are not analysed. Thus, for the
 </figcaption>
 </figure>
 
-## Installation
+## Getting Started
 
+In order to be able to run e**lab**orator you need to have a recent version of the [programming language R](https://www.r-project.org/ "R Project Homepage")
+and run the following R code.
 You can install the development version from
 [GitHub](https://github.com/) with:
 
 ``` r
+# If the package devtools is not yet installed on your system, you may remove the '#' from the next line to install it first.
+# install.packages("devtools")
 devtools::install_github("openpharma/elaborator")
 ```
 
-You can launch the e**lab**orator with:
+Now you can launch the e**lab**orator with:
 
 ``` r
 launch_elaborator()
