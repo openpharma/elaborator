@@ -1,12 +1,12 @@
-#' Draws a circle with specified size, coordinates and color in a plot window 
+#' Draws a circle with specified size, coordinates and color in a plot window
 #'
 #' @description
 #' This function is mostly useful for generating the reference-value based pattern analysis plots. It draws a circle with specified size, coordinates and color in a plot window.
 #'
-#' @param x x-coordinate of circle 
-#' @param y y-coordinate of circle 
+#' @param x x-coordinate of circle
+#' @param y y-coordinate of circle
 #' @param height height of curved lines which connect circles
-#' @param dot_col color of circle 
+#' @param dot_col color of circle
 #' @param pattern_Matrix matrix with the reference-value based pattern information
 #' @param number_column number of layers (visits)
 #' @param dot_Radius circle radius for circles representing existing patterns

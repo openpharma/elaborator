@@ -9,6 +9,7 @@
 #'
 #'@keywords internal
 
-elaborator_calculate_spearman_distance <- function(x){
-  stats::as.dist(1 - abs(stats::cor(t(x), method = "spearman", use = "complete.obs")))
+elaborator_calculate_spearman_distance <- function(x) {
+  stats::as.dist(1 - abs(stats::cor(t(x), method = "spearman"#, use = "complete.obs"
+                                    )))
 }

@@ -8,7 +8,7 @@ elaborator_plot_ref_pattern(
   data,
   criterion,
   fontsize = 0.6,
-  sorting_vector = as.character(unique(data[, "PARAMCD"])),
+  sorting_vector = as.character(unique(data[, "LBTESTCD"])),
   abnormal_value_factor = 1
 )
 }

@@ -59,7 +59,7 @@ elaborator_derive_test_values <- function(
       })
     })
 
-    esti2 <- matrix(esti, length(as.character(unique(data$PARAMCD))),
+    esti2 <- matrix(esti, length(as.character(unique(data$LBTESTCD))),
                    length(levels(data$TRTP)))
     rownames(esti2) <- rownames(esti)
     colnames(esti2) <- colnames(esti)
@@ -103,9 +103,9 @@ elaborator_derive_test_values <- function(
             } else {res <- NA}
           })
         })
-        esti <- matrix(esti, length(as.character(unique(data$PARAMCD))),
+        esti <- matrix(esti, length(as.character(unique(data$LBTESTCD))),
                        length(levels(data$TRTP)))
-        rownames(esti) <- as.character(unique(data$PARAMCD))
+        rownames(esti) <- as.character(unique(data$LBTESTCD))
         colnames(esti) <- levels(data$TRTP)
 
         infotest[[i]]$p.value <- pval

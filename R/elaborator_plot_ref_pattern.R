@@ -18,7 +18,7 @@ elaborator_plot_ref_pattern <- function(
     data,
     criterion,
     fontsize = 0.6,
-    sorting_vector = as.character(unique(data[, "PARAMCD"])),
+    sorting_vector = as.character(unique(data[, "LBTESTCD"])),
     abnormal_value_factor = 1
   ) {
   variable <- treat <- . <- subj <- upb <- upb2 <- lwb <- lwb2 <- difference_tmp <- dimension <- difference <- dimension2 <- NULL
@@ -28,10 +28,10 @@ elaborator_plot_ref_pattern <- function(
   colRvbpNeg <- "#f78300"
 
   if (length((unique(data$TRTP))) == 0 |
-     length(unique(data[, "PARAMCD"])) == 0) {
+     length(unique(data[, "LBTESTCD"])) == 0) {
 
-    on_ex <- graphics::par("mfrow", "bty","mar","oma","bg")
-    on.exit(graphics::par(on_ex))
+    # on_ex <- graphics::par("mfrow", "bty","mar","oma","bg")
+    # on.exit(graphics::par(on_ex))
     graphics::par(mfrow = c(1, 1),
         bty = "n",
         mar = c(1, 1, 1, 1),
@@ -44,8 +44,8 @@ elaborator_plot_ref_pattern <- function(
     graphics::text(0.5, 0.5, paste0("No values for this Treatment"))
   } else {
 
-    if (length(unique(data$PARAMCD))*length(unique(data$TRTP)) > 1) {
-    shiny::withProgress(message = paste0('generating ', length(unique(data$PARAMCD))*length(unique(data$TRTP)),' Plots ...'), value = 0, {
+    if (length(unique(data$LBTESTCD))*length(unique(data$TRTP)) > 1) {
+    shiny::withProgress(message = paste0('generating ', length(unique(data$LBTESTCD))*length(unique(data$TRTP)),' Plots ...'), value = 0, {
     shiny::incProgress(0, detail = paste(""))
 
     number <- function(p){
@@ -63,12 +63,11 @@ elaborator_plot_ref_pattern <- function(
 
     D <- data.frame(subj = data$SUBJIDN,
                    treat = data$TRTP,
-                   variable = data$PARAMCD,
+                   variable = data$LBTESTCD,
                    time = as.numeric(data$AVISIT),
                    value2 = data$LBORRES,
                    lwb  = as.numeric(data$LBORNRLO),
                    upb  = as.numeric(data$LBORNRHI))
-
     if(abnormal_value_factor >= 0 & abnormal_value_factor != 1) {
       D$lwb2 <- D$lwb * abnormal_value_factor
       D$upb2 <- D$upb * abnormal_value_factor
@@ -100,6 +99,7 @@ elaborator_plot_ref_pattern <- function(
 
     reducedData_wide <- reshape2::dcast(reducedData, treat + variable + subj ~ time, drop = TRUE)
 
+
     reducedData_long <- reducedData_wide %>%
       dplyr::group_by(treat, variable) %>%
       dplyr::select(-subj) %>%
@@ -110,14 +110,16 @@ elaborator_plot_ref_pattern <- function(
       dplyr::select(-c(data, difference_tmp)) %>%
       dplyr::mutate(dimension2 = dimension %>%
                unlist) %>%
+      #(1)
+      dplyr::filter(dimension2 > 0) %>%
       dplyr::mutate(mz = purrr::map(difference, ~ number(.)))
 
     sortinput <- sorting_vector[sorting_vector %in% reducedData_long$variable]
 
     graphics::layout(matrix(1:(length(Treats) * length(sortinput)), length(Treats), length(sortinput)))
 
-    on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
-    on.exit(graphics::par(on_ex))
+    # on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
+    # on.exit(graphics::par(on_ex))
     graphics::par(mfrow = c(length((unique(data$TRTP))), length(unique(sortinput))),
         mai = rep(0, 4), xaxs = "i", yaxs = "i",
         bg = ColorBG,
@@ -200,7 +202,7 @@ elaborator_plot_ref_pattern <- function(
 
       D <- data.frame(subj = data$SUBJIDN,
                       treat = data$TRTP,
-                      variable = data$PARAMCD,
+                      variable = data$LBTESTCD,
                       time = as.numeric(data$AVISIT),
                       value2 = data$LBORRES,
                       lwb  = as.numeric(data$LBORNRLO),
@@ -249,20 +251,22 @@ elaborator_plot_ref_pattern <- function(
         dplyr::select(-c(data, difference_tmp)) %>%
         dplyr::mutate(dimension2 = dimension %>%
                         unlist) %>%
+        #(2)
+        dplyr::filter(dimension2 > 0) %>%
         dplyr::mutate(mz = purrr::map(difference, ~ number(.)))
 
       sortinput <- sorting_vector[sorting_vector %in% reducedData_long$variable]
 
       graphics::layout(matrix(1:(length(Treats) * length(sortinput)), length(Treats), length(sortinput)))
 
-      on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
-      on.exit(graphics::par(on_ex))
+      # on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
+      # on.exit(graphics::par(on_ex))
       graphics::par(mfrow = c(length((unique(data$TRTP))), length(unique(sortinput))),
                     mai = rep(0, 4), xaxs = "i", yaxs = "i",
                     bg = ColorBG,
                     fg = grDevices::rgb(140, 140, 140, maxColorValue = 255),
                     font = 1, font.axis = 1, font.lab = 1, font.main = 1, font.sub = 1,
-                    ps = 5, cex = 1,
+                    ps = 5, cex = 1.2,
                     family = "sans")
 
       for (treatments in Treats) {
@@ -271,7 +275,6 @@ elaborator_plot_ref_pattern <- function(
           dimension_tmp <- reducedData_long %>%
             dplyr::filter(variable == labvalues , treat == treatments) %>%
             dplyr::pull(dimension2)
-
           if (length(dimension_tmp) == 0) {
             graphics::plot(NULL, NULL, ylim = c(0, 1), xlim = c(0, 1), axes = FALSE, ylab = "", xlab = "")
             graphics::rect(xleft = graphics::grconvertX(0, 'ndc', 'user'), xright = graphics::grconvertX(1, 'ndc', 'user'),

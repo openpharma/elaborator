@@ -5,27 +5,30 @@
 \title{Generates boxplots for each treatment group and laboratory parameter}
 \usage{
 elaborator_plot_quant_trends(
-  dat1,
+  elab_data,
   signtest = TRUE,
   Visit1,
   Visit2,
-  sameaxes = FALSE,
-  ats = NULL,
+  sameaxes,
   cols = NULL,
   labelvis = NULL,
   labcolumn,
   sortpoints = FALSE,
   pcutoff = 0.01,
-  cexoutliers = 0.7,
   infotest = NULL,
-  sortinput = as.character(unique(dat1[, labcolumn])),
+  sortinput,
   bordercol = NULL,
   add_points = TRUE,
-  connect_lines = FALSE
+  connect_lines,
+  lin_data = NULL,
+  outliers,
+  tolerated_percentage = 100,
+  color_lines_options,
+  custom_visits = NULL
 )
 }
 \arguments{
-\item{dat1}{data set}
+\item{elab_data}{elaborator data}
 
 \item{signtest}{logical, if true sign test, otherwise t-test for comparing Visit1 and Visit2 is performed}
 
@@ -35,19 +38,15 @@ elaborator_plot_quant_trends(
 
 \item{sameaxes}{logical indicating if boxplot should have the same y-axis range for all treatment groups within a laboratory parameter}
 
-\item{ats}{numeric vector giving the locations where the boxplots should be drawn; defaults to 1:n where n is the number of boxplots.}
-
 \item{cols}{vector with colors of boxplots}
 
-\item{labelvis}{vector of visit names used for labelling}
+\item{labelvis}{vector of visit names used for labeling}
 
 \item{labcolumn}{column name of dat1 which includes the laboratory parameter names}
 
 \item{sortpoints}{logical indicating if dots in boxplots should be sorted from smallest to largest}
 
 \item{pcutoff}{numeric for p-value threshold; if p-value of specified test is below this threshold, the background of the respective plot is colorized.}
-
-\item{cexoutliers}{size of the outliers}
 
 \item{infotest}{list object from the perform test function}
 
@@ -58,6 +57,18 @@ elaborator_plot_quant_trends(
 \item{add_points}{logical indicating if points showing patients' values should be added to the boxplots}
 
 \item{connect_lines}{logical indicating if subject values should be connected between visits via lines}
+
+\item{lin_data}{data set with connection line data}
+
+\item{tolerated_percentage}{tolerated percentage value}
+
+\item{color_lines_options}{option how the lines between visits should be colorized.
+Possible options are "first_last","each_visit",
+"custom_visits" or "all_grey". In the first three options
+decrease is colorized blue and an increase orange.}
+
+\item{custom_visits}{if col_lines_options is "custom_visits" then two visits
+need to be selected. Otherwise all lines are grey.}
 }
 \value{
 No return value. Generates plots for the quantitative trends analysis.

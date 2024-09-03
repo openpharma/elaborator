@@ -10,8 +10,8 @@
 #'@keywords internal
 
 elaborator_draw_scheme_preview <- function(x) {
-  on_ex <- graphics::par("mar")
-  on.exit(graphics::par(on_ex))
+  # on_ex <- graphics::par("mar")
+  # on.exit(graphics::par(on_ex))
   graphics::par(mar = c(0, 0, 0, 0))
   graphics::plot(NULL, axes = FALSE, xlim = c(0,1), ylim = c(0,1), yaxs = 'i', xaxs = 'i')
   graphics::rect(xleft = graphics::grconvertX(0,'ndc','user'), xright = graphics::grconvertX(1,'ndc','user'),

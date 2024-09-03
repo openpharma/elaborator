@@ -4,9 +4,16 @@
 \alias{launch_elaborator}
 \title{Launches the elaborator application}
 \usage{
-launch_elaborator(host = "127.0.0.1", port = NULL, browser = NULL)
+launch_elaborator(
+  elaborator_data = NULL,
+  host = "0.0.0.0",
+  port = NULL,
+  browser = NULL
+)
 }
 \arguments{
+\item{elaborator_data}{data derived for the elaborator app}
+
 \item{host}{host link (defaults to the local machine "127.0.0.1")}
 
 \item{port}{port number (randomly chosen unless specified as a certain number)}
