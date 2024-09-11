@@ -18,6 +18,59 @@ By using various types of analyses you will be able to view  your laboratory dat
 
 You can find a concept description of each type of analysis in the following. Available graphic and filter options as well as missing data handling are described below.
 
+## Getting Started
+
+In order to be able to run e**lab**orator you need to have a recent version of the [programming language R](https://www.r-project.org/ "R Project Homepage")
+and run the following R code.
+You can install the development version from
+[GitHub](https://github.com/) with:
+
+``` r
+# If the package devtools is not yet installed on your system, you may remove the '#' from the next line to install it first.
+# install.packages("devtools")
+devtools::install_github("openpharma/elaborator")
+```
+
+Now you can launch the e**lab**orator with:
+
+``` r
+launch_elaborator()
+```
+
+
+## Data Manual
+
+Currently, the following two file formats are supported:
+- A **c**omma **s**eparated **v**alues (CSV) file
+- An RData file
+
+Otherwise you can use a demo data set to explore the app or use the 'file creation'-tab.
+In the 'file creation'-tab you can upload sas data set(s) to create the appropriate app format.
+In order to use the e**lab**orator, your laboratory data file has to include the following columns:
+
+- a subject identifier (called **SUBJIDN**)
+- the visit (called **AVISIT**)
+- the treatment group (called **TRTP**)
+- an (abbreviated) name of the laboratory parameter (called **LBTESTCD**) 
+- the laboratory value measurement (called **LBORRES**) 
+- the lower limit of normal (LLN) (called **LBORNRLO**) 
+- the upper limit of normal (ULN) (called **LBORNRHI**)
+
+Please consider the following:
+- Missing laboratory values must be coded as NA . We recommend carefully reading the section on *Handling Missing Data* in the *Information*-tab of the app for correct interpretation. The section describes in detail how the e**lab**orator deals with missing data.
+- If a laboratory parameter has no lower  or upper limit of normal, please do not insert any character in the respective cell but leave the cell empty or use the NA coding. Please do not use blank/space.
+- Variable names must be spelled correctly as shown above (please use upper case letters).
+- Do not use special characters for variable names or laboratory parameter names.
+- All laboratory measurements have to be numeric. That means, do not use '+', '-', '>', '<', 'negative' etc. For example, '<1' is not a valid laboratory measurement.
+- **Please always check your data carefully before uploading it to the elaborator.** You can also inspect the data loaded in the e**lab**orator app via the *Raw Data*-tab.
+
+
+This data set can then be loaded within the e**lab**orator using the “Data Upload” functionality in the main menu on the left side of the application:
+
+<img src='inst/www/data_upload.png'/>
+
+Please refer to the publication mentioned above and the “Data Manual” and “Information” tab in the main menu within the application for further information on how to use the e**lab**orator.
+
 ## Quantitative Trends
 
 Aim: Examine changes in laboratory values across study visits and explore whether changes differ between treatment groups. 
@@ -74,89 +127,7 @@ Laboratory parameters without reference range(s) are not analysed. Thus, for the
 </figcaption>
 </figure>
 
-## Getting Started
-
-In order to be able to run e**lab**orator you need to have a recent version of the [programming language R](https://www.r-project.org/ "R Project Homepage")
-and run the following R code.
-You can install the development version from
-[GitHub](https://github.com/) with:
-
-``` r
-# If the package devtools is not yet installed on your system, you may remove the '#' from the next line to install it first.
-# install.packages("devtools")
-devtools::install_github("openpharma/elaborator")
-```
-
-Now you can launch the e**lab**orator with:
-
-``` r
-launch_elaborator()
-```
-
 ## Publication
 
 Janitza, S., Majumder, M., Mendolia, F., Jeske, S., & Kulmann, H.
 elaborator: A Novel App for Insights into Laboratory Data of Clinical Trials. Therapeutic Innovation & Regulatory Science, 55, 1220-1229 (2021). <https://doi.org/10.1007/s43441-021-00318-4>.
-
-## Data Manual
-
-Currently, the following two file formats are supported:
-- A **c**omma **s**eparated **v**alues (CSV) file
-- An RData file
-
-In order to use the e**lab**orator, your laboratory data file has to include the following columns:
-
-- a subject identifier (called **SUBJIDN**)
-- the visit (called **AVISIT**)
-- the treatment group (called **TRTP**)
-- an (abbreviated) name of the laboratory parameter (called **LBTESTCD**) 
-- the laboratory value measurement (called **LBORRES**) 
-- the lower limit of normal (LLN) (called **LBORNRLO**) 
-- the upper limit of normal (ULN) (called **LBORNRHI**)
-
-Please consider the following:
-- Missing laboratory values must be coded as NA . We recommend carefully reading the section on *Handling Missing Data* in the *Information*-tab of the app for correct interpretation. The section describes in detail how the e**lab**orator deals with missing data.
-- If a laboratory parameter has no lower  or upper limit of normal, please do not insert any character in the respective cell but leave the cell empty or use the NA coding. Please do not use blank/space.
-- Variable names must be spelled correctly as shown above (please use upper case letters).
-- Do not use special characters for variable names or laboratory parameter names.
-- All laboratory measurements have to be numeric. That means, do not use '+', '-', '>', '<', 'negative' etc. For example, '<1' is not a valid laboratory measurement.
-- **Please always check your data carefully before uploading it to the elaborator.** You can also inspect the data loaded in the e**lab**orator app via the *Raw Data*-tab.
-
-### Example 
-
-The following code generates a generic example data set and saves it locally:
-
-``` r
-set.seed(123)
-lp <- 30    # number of laboratory parameter
-nv <- 4     # number of visits
-nsubj <- 50 # number of subjects per group
-trtgp <- 4  # number of treatment groups
-ntotal <- nsubj*trtgp
-dat <- NULL
-for(i in 1:lp){
-  tmp <- data.frame(SUBJIDN=sort(rep(1:ntotal,4)),
-                    AVISIT=rep(c("Baseline", "V2", "V3", "V4"),nsubj),
-                    TRTP=sort(rep(c("Placebo", "Dose1", "Dose2", "Dose3"),ntotal)),
-                    LBTESTCD=paste("param", i, sep=""),
-                    LBORRES=abs(rnorm(ntotal,10,5)),
-                    LBORNRLO=5,
-                    LBORNRHI=15)
-  dat <- rbind(dat, tmp)
-}
-
-## add increasing trend for first 3 parameters
-idx <- dat$LBTESTCD %in% c("param1", "param2", "param3") & dat$TRTP != "Placebo"
-dat$LBORRES[idx] <-  dat$LBORRES[idx] + rep(c(0,2, 4, 6),50*3)
-## add decreasing trend for next 3 parameters
-idx <- dat$LBTESTCD %in% c("param4", "param5", "param6") & dat$TRTP != "Placebo"
-dat$LBORRES[idx] <- dat$LBORRES[idx] - rep(c(0,2, 4, 6),50*3)
-
-save(dat,file="elab_example.RData")
-```
-
-This data set can then be loaded within the e**lab**orator using the “Data Upload” functionality in the main menu on the left side of the application:
-
-<img src='inst/www/data_upload.png'/>
-
-Please refer to the publication mentioned above and the “Data Manual” and “Information” tab in the main menu within the application for further information on how to use the e**lab**orator.
