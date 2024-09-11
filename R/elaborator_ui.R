@@ -296,7 +296,7 @@ elaborator_ui <- function() {
           status ="warning",
           shape = 'round',
           animation = 'smooth',
-          choices = c('*.RData file', '*.CSV file')
+          choices = c('*.RData file', '*.CSV file','Use file creation tab')
         ),
         htmlOutput("err_message"),
         tags$head(
@@ -362,18 +362,21 @@ elaborator_ui <- function() {
         )
       ),
       shinydashboard::menuItem(
-        "Filter",
-        icon = icon("filter"),
-        tabName = "filter",
+        "File Creation (SAS data)",
+        tabName = "sas_data",
+        icon = icon("calculator"),
         badgeLabel = "new",
         badgeColor = "green"
+      ),
+      shinydashboard::menuItem(
+        "Filter",
+        icon = icon("filter"),
+        tabName = "filter"
       ),
        shinydashboard::menuItem(
         "Raw Data",
         icon = icon("file-lines"),
-        tabName = "raw_data",
-        badgeLabel = "new",
-        badgeColor = "green"
+        tabName = "raw_data"
       ),
       shinydashboard::menuItem(
         text = "Data Manual",
@@ -385,7 +388,7 @@ elaborator_ui <- function() {
         icon = icon("info"),
         tabName = "helptext"
       ),
-      "elaborator Version 1.3"
+      paste0("elaborator Version ",packageVersion("elaborator"))
     )
   ),
   #### dashboardBody ####
@@ -783,6 +786,12 @@ elaborator_ui <- function() {
             )
           )
         )
+      ),
+      shinydashboard::tabItem(
+        tabName = "sas_data",
+        # shiny::conditionalPanel(condition = "input.sidebarmenu =='sas_data'",
+          file_creation_ui("file_creation")
+        # )
       ),
       shinydashboard::tabItem(
         tabName = "datamanual",

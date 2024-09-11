@@ -20,10 +20,11 @@ elaborator_load_and_check <- function(
   loaded_file = NULL,
   separator = NULL,
   quote = NULL,
-  decimal = NULL
+  decimal = NULL,
+  file_creation_data = NULL
 ) {
   # need a non-empty data path
-    if (!is.null(rdata_file_path) || !is.null(csv_file_path) || !is.null(loaded_file) || data_switch == "Demo data") {
+    if (!is.null(rdata_file_path) || !is.null(csv_file_path) || !is.null(loaded_file) || data_switch == "Demo data"|| data_switch == "Use file creation tab") {
       required_elaborator_vars <- c("SUBJIDN", "AVISIT", "TRTP", "LBTESTCD", "LBORRES", "LBORNRLO", "LBORNRHI")
       if (data_switch == 'Demo data') {
         elaborator_data <- get(load(here::here("data", "elaborator_demo.RData")))
@@ -132,6 +133,16 @@ elaborator_load_and_check <- function(
           elaborator_data <- NULL
           error_message <- NULL
         }
+      } else if (data_switch == 'Use file creation tab') {
+        if (!is.null(file_creation_data)) {
+            elaborator_data <- file_creation_data
+            error_message <- NULL
+        } else {
+          elaborator_data <- NULL
+          error_message <- paste0(
+            "No data send to app"
+          )
+        }
       }
     } else {
       elaborator_data <- NULL
@@ -145,11 +156,26 @@ elaborator_load_and_check <- function(
         dplyr::select("SUBJIDN","LBTESTCD","AVISIT","TRTP")
       if (any(duplicated(reduced_elaborator_data))) {
         error_message <- paste0("
-        The are duplicated values in the data set! Please check the data manual!
+        There are duplicated values in the data set! Please check the data manual!
         ")
         elaborator_data <- NULL
       }
     }
+    #2. remove labparameter with no non-empty labvalues
+  if (is.null(error_message) & !is.null(elaborator_data)) {
+    #get lab parameter with at least one non missing lab value
+    lbtestcd_index <- elaborator_data %>%
+      dplyr::group_by(LBTESTCD) %>%
+      dplyr::summarise(n_non_empty = sum(!is.na(LBORRES))) %>%
+      dplyr::filter(n_non_empty > 0) %>%
+      dplyr::pull(LBTESTCD) %>%
+      as.vector()
+
+    #filter
+    elaborator_data <- elaborator_data %>%
+      dplyr::filter(LBTESTCD %in% lbtestcd_index)
+
+  }
   return(
     list(data = elaborator_data,
          message = error_message

@@ -14,7 +14,31 @@ elaborator_server <- function(input, output, session) {
   LBORNRLO <- non_missing_values <- LBORNRHI <- highref <- lowref <- InQuRa <- NULL
   Range <- refRange <- LBORRES.y <- visit_removed <- all_complete <- LBORRES.x <- vari <- js <- NULL
 
+  #increase file upload size to 3600MB
+  options(shiny.maxRequestSize = 3600*1024^2)
 
+  # reactive object with data created by file creation
+  file_creation_data <- callModule(file_creation_server, "file_creation")
+
+  # shiny::observeEvent(input$impswitch, {
+  #   if (input$impswitch == "Use file creation tab") {
+  #     shinydashboard::updateTabItems(session,"sidebarmenu", "sas_data")
+  #   }
+  # })
+
+  shiny::observeEvent(file_creation_data$send_button(),{
+    if (file_creation_data$send_button() > 0) {
+
+      shinyWidgets::updatePrettyRadioButtons(
+        session,
+        inputId = 'impswitch',
+        selected = "Use file creation tab"
+      )
+
+      shinydashboard::updateTabItems(session,"sidebarmenu", "quant")
+
+    }
+  })
   #global settings
 
   colBoxplot4 <- "#004a8a"
@@ -178,6 +202,7 @@ elaborator_server <- function(input, output, session) {
 
   raw_data_and_warnings <- shiny::reactive({
     input$impswitch
+
     tmp <- elaborator_load_and_check(
       data_switch = input$impswitch,
       rdata_file_path = input$file$datapath,
@@ -185,7 +210,8 @@ elaborator_server <- function(input, output, session) {
       loaded_file = app_input(),
       separator = input$sep,
       quote = input$quote,
-      decimal = input$dec
+      decimal = input$dec,
+      file_creation_data = file_creation_data$df()
     )
     if (!is.null(tmp$data)) {
       tmp$data <- elaborator_fill_with_missings(
@@ -1234,7 +1260,6 @@ elaborator_server <- function(input, output, session) {
 
   #### REACTIVE OBJECTS ####
   #### reactiveValues ####
-  options(shiny.maxRequestSize = 50 * 1024 ^ 2)
 
   start <- shiny::reactiveValues(dat = FALSE)
 
@@ -2167,7 +2192,7 @@ elaborator_server <- function(input, output, session) {
         session,
         inputId = "impswitch",
         label = 'Select file format',
-        choices = c('*.RData file', '*.CSV file','Demo data'),
+        choices = c('*.RData file', '*.CSV file','Demo data','Use file creation tab'),
         prettyOptions = list(status = "warning")
       )
     }
