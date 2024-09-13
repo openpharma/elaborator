@@ -7,7 +7,7 @@
 elaborator_server(input, output, session)
 }
 \arguments{
-\item{id, input, output, session}{Internal parameters for {shiny}.}
+\item{input, output, session}{Internal parameters for shiny.}
 }
 \value{
 No return value. Server part of the app, used in launch_elaborator-function.

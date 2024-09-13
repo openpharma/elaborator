@@ -1,6 +1,6 @@
 #' Server part of the elaborator application
 #'
-#'@param id,input,output,session Internal parameters for {shiny}.
+#'@param input,output,session Internal parameters for shiny.
 #'
 #'@return No return value. Server part of the app, used in launch_elaborator-function.
 #'
