@@ -31,8 +31,8 @@ elaborator_plot_qual_trends <- function(
 
   if (length((unique(dat1$TRTP))) == 0 |
       length(unique(dat1[, "LBTESTCD"])) == 0) {
-    # on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
-    # on.exit(graphics::par(on_ex))
+    on_ex <- graphics::par("mfrow","bty","mar","oma","bg")
+    on.exit(graphics::par(on_ex))
     graphics::par(
       mfrow = c(1,1),
       bty = "n",
@@ -136,8 +136,7 @@ elaborator_plot_qual_trends <- function(
           "font.sub", "font.main", "font.sub",
           "ps", "cex", "family"
         )
-
-        # on.exit(graphics::par(on_ex))
+        on.exit(graphics::par(on_ex))
 
         graphics::par(
           mai = rep(0, 4),
@@ -382,8 +381,7 @@ elaborator_plot_qual_trends <- function(
                            "font", "font.lab", "font.main",
                            "font.sub", "font.main", "font.sub",
                            "ps", "cex", "family")
-
-    # on.exit(graphics::par(on_ex))
+    on.exit(graphics::par(on_ex))
 
     graphics::par(mai = rep(0, 4), xaxs = "i", yaxs = "i",
                   bg = ColorBG,

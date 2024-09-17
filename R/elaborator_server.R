@@ -513,8 +513,8 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      # on_ex <- graphics::par(no.readonly = TRUE)
-      # on.exit(graphics::par(on_ex))
+      on_ex <- graphics::par(no.readonly = TRUE)
+      on.exit(graphics::par(on_ex))
       graphics::par(bg = ColorBG)
       graphics::plot(dendro, ylab = "Distance", horiz = FALSE)
     }
@@ -769,16 +769,16 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      # on_ex <- graphics::par(no.readonly = TRUE)
-      # on.exit(graphics::par(on_ex))
+      on_ex <- graphics::par(no.readonly = TRUE)
+      on.exit(graphics::par(on_ex))
       graphics::par(bg = ColorBG)
       graphics::plot(dendro2, ylab = "Distance", horiz = FALSE)
     }
   })
 
   output$legend <- shiny::renderPlot({
-    # on_ex <- graphics::par("mfrow","oma","mar")
-    # on.exit(graphics::par(on_ex))
+    on_ex <- graphics::par("mfrow","oma","mar")
+    on.exit(graphics::par(on_ex))
     graphics::par(mfrow = c(1,1), oma = c(0,0,0,0), mar = c(0,0,0,0))
     graphics::plot(
       NULL,
@@ -1090,8 +1090,8 @@ elaborator_server <- function(input, output, session) {
         col = ColorBG,
         xpd = TRUE
       )
-      # on_ex <- graphics::par(no.readonly = TRUE)
-      # on.exit(graphics::par(on_ex))
+      on_ex <- graphics::par(no.readonly = TRUE)
+      on.exit(graphics::par(on_ex))
       graphics::par(bg = ColorBG)
       graphics::plot(dendro3, ylab = "Distance", horiz = FALSE)
     }
