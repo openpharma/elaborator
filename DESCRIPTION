@@ -2,12 +2,11 @@ Package: elaborator
 Title: A 'shiny' Application for Exploring Laboratory Data
 Version: 1.3.4
 Authors@R: c(person("Silke", "Janitza", role = "aut"),
-              person("Steffen", "Jeske", email = "steffen.jeske.ext@bayer.com", role = c("aut","cre")),
+              person("Steffen", "Jeske", role = "aut"),
               person("Madhurima", "Majumder", role = "aut"),
               person("Franco", "Mendolia", role = "aut"),
+              person("Bodo", "Kirsch", email = "bodo.kirsch@bayer.com", role = "cre"),
               person("Hermann", "Kulmann", role = "aut"))
-Author: Silke Janitza [aut], Steffen Jeske [aut, cre], Madhurima Majumder [aut], Franco Mendolia [aut], Hermann Kulmann [aut]
-Maintainer: Bodo Kirsch <bodo.kirsch@bayer.com>
 Description: A novel concept for generating knowledge and gaining insights into laboratory data. You will be able to efficiently and easily explore your laboratory data from different perspectives. Janitza, S., Majumder, M., Mendolia, F., Jeske, S., & Kulmann, H. (2021) <https://doi.org/10.1007/s43441-021-00318-4>.
 Depends: R (>= 3.5.0), seriation
 License: GPL-3
