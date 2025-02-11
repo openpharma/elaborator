@@ -74,25 +74,25 @@ file_creation_ui <- function(id){
         shinyBS::bsCollapsePanel(
           shiny::HTML('<p style="color:black; font-size:100%;"> Filter: (click to open) </p>'),
           "Filter options",
-          shiny::uiOutput(ns("filter_percentage")),
+          shiny::uiOutput(ns("filter_percentage_file")),
           shiny::uiOutput(ns("pickerinput_adlb")),
           shiny::fluidRow(
             shiny::column(4,
               shiny::actionButton(
-                inputId = ns("insertBtn"),
+                inputId = ns("insertBtn_file"),
                 label = "Add",
                 icon = icon("plus")
               )
             ),
             shiny::column(4,
               shiny::actionButton(
-                inputId = ns("removeBtn"),
+                inputId = ns("removeBtn_file"),
                 label = "Delete",
                 icon = icon("minus")
               )
             )
           ),
-          shiny::tags$div(id = "placeholder"),
+          shiny::tags$div(id = "placeholder_file"),
           shiny::conditionalPanel(condition = "output.condition_filter == true",
             shiny::actionButton(
               inputId = ns("apply"),
@@ -594,23 +594,23 @@ file_creation_server <- function(input, output, session) {
 
   #### FILTER ####
   # Reset initial values if Remove Button is clicked
-  shiny::observeEvent(input$removeBtn, {
+  shiny::observeEvent(input$removeBtn_file, {
     id_adlb_m$myList <- list()
     id_adlb_m$myList2 <- list()
   })
 
   # Delete UI Elements if Remove Button is clicked
-  shiny::observeEvent(input$removeBtn, {
+  shiny::observeEvent(input$removeBtn_file, {
     for (i in 1:length(inserted_adlb)) {
       removeUI(selector = paste0("#", inserted_adlb[i]))
     }
   })
 
-  output$filter_percentage <- shiny::renderUI({
+  output$filter_percentage_file <- shiny::renderUI({
     total_tmp <- dim(adlb_data())[1]
     value_tmp <- dim(adlb_filtered())[1]
     shinyWidgets::progressBar(
-            id = ns("filter_percentage"),
+            id = ns("filter_percentage_file"),
             value = value_tmp,
             total = total_tmp,
             title = "Number of Rows of adlb (+adsl)",
@@ -671,7 +671,7 @@ file_creation_server <- function(input, output, session) {
   condition_filter <- shiny::reactiveValues(val = FALSE)
   output$condition_filter <- shiny::reactive(condition_filter$val)
   # observe the 'Insert' Button click:
-  shiny::observeEvent(c(input$insertBtn), {
+  shiny::observeEvent(c(input$insertBtn_file), {
 
     shiny::req(adlb_data())
 
@@ -692,7 +692,7 @@ file_creation_server <- function(input, output, session) {
 
     inserted_adlb <<- c()
 
-    btn <- input$insertBtn
+    btn <- input$insertBtn_file
 
     pickerinput_adlb <- input$pickerinput_adlb
 
@@ -700,7 +700,7 @@ file_creation_server <- function(input, output, session) {
       for (i in 1: length(pickerinput_adlb)) {
         id <- paste0(pickerinput_adlb[i], btn)
         shiny::insertUI(
-          selector = '#placeholder',
+          selector = '#placeholder_file',
           ui = shiny::tags$div(
             if (!is.numeric(adlb_data %>%
                            dplyr::pull(pickerinput_adlb[i]))) {
