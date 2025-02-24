@@ -700,7 +700,7 @@ elaborator_server <- function(input, output, session) {
          )
 
       ),
-      style = "z-index: 10;"
+      style = "z-index: 99999;"
     )
   })
 
