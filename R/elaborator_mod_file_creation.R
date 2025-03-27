@@ -127,7 +127,7 @@ file_creation_ui <- function(id){
             shiny::wellPanel(
               id = "table_adlb_Panel",
               style = "color:black; overflow-y:scroll; max-height: 600px",
-              shiny::dataTableOutput(ns('table_adlb'))
+              DT::renderDT(ns('table_adlb'))
             )
           ),
           shinyBS::bsCollapsePanel(
@@ -135,7 +135,7 @@ file_creation_ui <- function(id){
             shiny::wellPanel(
               id = "table_csv_Panel",
               style = "color:black; overflow-y:scroll; max-height: 600px",
-              shiny::dataTableOutput(ns('table_csv'))
+              DT::renderDT(ns('table_csv'))
             )
           )
         )
@@ -589,8 +589,8 @@ file_creation_server <- function(input, output, session) {
     return(csv2)
   })
 
-  output$table_adlb <- renderDataTable(adlb_data(), options = list(autoWidth = FALSE))
-  output$table_csv <- renderDataTable(csv_file(), options = list(autoWidth = FALSE))
+  output$table_adlb <- DT::renderDataTable(adlb_data(), options = list(autoWidth = FALSE))
+  output$table_csv <- DT::renderDataTable(csv_file(), options = list(autoWidth = FALSE))
 
   #### FILTER ####
   # Reset initial values if Remove Button is clicked
