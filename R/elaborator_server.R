@@ -487,7 +487,7 @@ elaborator_server <- function(input, output, session) {
         dplyr::group_by(SUBJIDN,LBTESTCD,TRTP) %>%
         dplyr::summarise(
           non_missing_values = sum(!is.na(LBORRES)),
-          all_complete = ifelse(non_missing_values == visits_non_missing, TRUE,FALSE),
+          all_complete = unique(ifelse(non_missing_values == visits_non_missing, TRUE,FALSE)),
           .groups = "keep"
         ) %>% dplyr::ungroup() %>% dplyr::select(SUBJIDN,LBTESTCD,TRTP,all_complete) %>%
           dplyr::distinct(),
