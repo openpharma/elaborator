@@ -2,15 +2,15 @@ Package: elaborator
 Title: A 'shiny' Application for Exploring Laboratory Data
 Version: 1.4.0
 Authors@R: c(person("Silke", "Janitza", role = "aut"),
-              person("Steffen", "Jeske", email = "steffen.jeske.ext@bayer.com", role = c("aut","cre")),
+              person("Steffen", "Jeske", role = "aut"),
               person("Madhurima", "Majumder", role = "aut"),
               person("Franco", "Mendolia", role = "aut"),
+              person("Bodo", "Kirsch", email = "bodo.kirsch@bayer.com", role = "cre"),
               person("Hermann", "Kulmann", role = "aut"))
-Author: Silke Janitza [aut], Steffen Jeske [aut, cre], Madhurima Majumder [aut], Franco Mendolia [aut], Hermann Kulmann [aut]
-Maintainer: Steffen Jeske <steffen.jeske.ext@bayer.com>
-Description: A novel concept for generating knowledge and gaining insights into laboratory data. You will be able to efficiently and easily explore your laboratory data from different perspectives.
+Description: A novel concept for generating knowledge and gaining insights into laboratory data. You will be able to efficiently and easily explore your laboratory data from different perspectives. Janitza, S., Majumder, M., Mendolia, F., Jeske, S., & Kulmann, H. (2021) <doi:10.1007/s43441-021-00318-4>.
 Depends: R (>= 3.5.0), seriation
-License: file LICENSE
+License: GPL-3
+URL: https://github.com/openpharma/elaborator
 Encoding: UTF-8
 Imports: shiny, dplyr, purrr, DT, here, tidyselect, rlang, tidyr, forcats, RColorBrewer, bsplus, dendextend, haven, reshape2, shape, shinyWidgets, shinydashboard
 LazyData: true

@@ -1,3 +1,9 @@
 ^elaborator\.Rproj$
 ^\.Rproj\.user$
 ^cran-comments\.md$
+^data-raw$
+^CODEOWNERS$
+^CODE_OF_CONDUCT.md$
+^CONTRIBUTING.md$
+^MAINTAINERS.md$
+^LICENSE$

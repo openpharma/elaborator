@@ -129,8 +129,6 @@ boxPlotColor <- function(input, output, session, dat, name, start_color, number)
 
 #' User Interface of the elaborator application
 #'
-#' @param id Internal parameters for {shiny}.
-#'
 #' @return No return value. User interface part of the app, used in launch_elaborator-function.
 #'
 #' @keywords internal

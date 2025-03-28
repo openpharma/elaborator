@@ -6,9 +6,6 @@
 \usage{
 elaborator_ui()
 }
-\arguments{
-\item{id}{Internal parameters for {shiny}.}
-}
 \value{
 No return value. User interface part of the app, used in launch_elaborator-function.
 }

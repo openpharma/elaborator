@@ -30,8 +30,8 @@ elaborator_plot_ref_pattern <- function(
   if (length((unique(data$TRTP))) == 0 |
      length(unique(data[, "LBTESTCD"])) == 0) {
 
-    # on_ex <- graphics::par("mfrow", "bty","mar","oma","bg")
-    # on.exit(graphics::par(on_ex))
+    on_ex <- graphics::par("mfrow", "bty","mar","oma","bg")
+    on.exit(graphics::par(on_ex))
     graphics::par(mfrow = c(1, 1),
         bty = "n",
         mar = c(1, 1, 1, 1),
@@ -118,8 +118,8 @@ elaborator_plot_ref_pattern <- function(
 
     graphics::layout(matrix(1:(length(Treats) * length(sortinput)), length(Treats), length(sortinput)))
 
-    # on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
-    # on.exit(graphics::par(on_ex))
+    on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
+    on.exit(graphics::par(on_ex))
     graphics::par(mfrow = c(length((unique(data$TRTP))), length(unique(sortinput))),
         mai = rep(0, 4), xaxs = "i", yaxs = "i",
         bg = ColorBG,
@@ -259,8 +259,8 @@ elaborator_plot_ref_pattern <- function(
 
       graphics::layout(matrix(1:(length(Treats) * length(sortinput)), length(Treats), length(sortinput)))
 
-      # on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
-      # on.exit(graphics::par(on_ex))
+      on_ex <- graphics::par("mfrow","mai","xaxs","yaxs","bg","fg","font","font.axis","font.lab","font.main","font.sub","ps","cex","family")
+      on.exit(graphics::par(on_ex))
       graphics::par(mfrow = c(length((unique(data$TRTP))), length(unique(sortinput))),
                     mai = rep(0, 4), xaxs = "i", yaxs = "i",
                     bg = ColorBG,
