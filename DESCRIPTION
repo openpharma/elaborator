@@ -1,6 +1,6 @@
 Package: elaborator
 Title: A 'shiny' Application for Exploring Laboratory Data
-Version: 1.3.4
+Version: 1.3.6
 Authors@R: c(person("Silke", "Janitza", role = "aut"),
               person("Steffen", "Jeske", role = "aut"),
               person("Madhurima", "Majumder", role = "aut"),
