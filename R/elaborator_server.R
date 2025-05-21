@@ -137,6 +137,7 @@ elaborator_server <- function(input, output, session) {
     }
   })
 
+
   shiny::observeEvent(app_input(), {
     if(!is.null(app_input())) {
       shinyWidgets::updatePrettyRadioButtons(
@@ -521,7 +522,7 @@ elaborator_server <- function(input, output, session) {
   })
 
 
-  #### QUALITATIVE TRENDS ####
+  #### QUANTITATIVE TRENDS ####
   output$hover <- shiny::renderPlot({
     input$apply_quant_plot
     shiny::req(shiny::isolate(data_with_selected_factor_levels()), input$plot_option_switch)
@@ -1641,7 +1642,7 @@ elaborator_server <- function(input, output, session) {
       } else {
         lines_data <- NULL
       }
-      #renderPlot created by elablorator_plot_quant_trends()-function
+      #renderPlot created by elaborator_plot_quant_trends()-function
       output$compl <- shiny::renderPlot({
         elaborator_plot_quant_trends(
           shiny::isolate(data_with_only_non_missings_over_visits()),

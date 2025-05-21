@@ -134,7 +134,7 @@ boxPlotColor <- function(input, output, session, dat, name, start_color, number)
 #' @keywords internal
 
 #### dashboardPage ####
-elaborator_ui <- function() {
+elaborator_ui <- function(apppars) {
 
   shinydashboard::dashboardPage(
   title = "elaborator",
@@ -179,7 +179,7 @@ elaborator_ui <- function() {
             label = 'Zoom / Pixel ratio (px)',
             min = 10,
             max = 820,
-            value = 100,
+            value = apppars$zoompx,
             step = 10
           ),
           shiny::sliderInput(
@@ -187,7 +187,7 @@ elaborator_ui <- function() {
             label = 'Change panel height',
             min = 400,
             max = 2400,
-            value = 500,
+            value = apppars$panelheight,
             step = 100
           )
         ),
@@ -199,7 +199,7 @@ elaborator_ui <- function() {
           bsplus::use_bs_tooltip(),
           bsplus::bs_embed_tooltip(
             tag = h5(span(shiny::tagList("Order of lab parameters", icon("question")))),
-            title = "You can choose between three options to arrange laboratory parameters. Details on the AI-sortng option are given in the 'Information'-tab.", placement = "top", expanded = TRUE
+            title = "You can choose between three options to arrange laboratory parameters. Details on the AI-sorting option are given in the 'Information'-tab.", placement = "top", expanded = TRUE
           ),
           shinyWidgets::prettyRadioButtons(
             inputId = "orderinglab",
@@ -353,7 +353,7 @@ elaborator_ui <- function() {
             label ='',
             min = 25,
             max = 100,
-            value = 50,
+            value = apppars$tolPercent,
             step = 5,
             post = "%"
           )
@@ -504,7 +504,7 @@ elaborator_ui <- function() {
                         Otherwise, each plot will have its own scale.",
                         placement = "top"
                       )),
-                      value = FALSE
+                      value = apppars$same_axes_per_treatment_logical
                     ),
                     shiny::checkboxInput(
                       inputId = "outlier",
@@ -514,7 +514,7 @@ elaborator_ui <- function() {
                         uses the five times interquartile range as a definition of outliers.",
                         placement = "top"
                       )),
-                      value = FALSE
+                      value = apppars$outliers_logical
                     ),
                     bsplus::use_bs_popover(),
                     bsplus::use_bs_tooltip(),
@@ -526,13 +526,13 @@ elaborator_ui <- function() {
                         ",
                         placement = "top"
                       )),
-                      value = FALSE
+                      value = apppars$draw_points_logical
                     ),
                     shiny::conditionalPanel(condition = "input.add_points == true",
                       shiny::checkboxInput(
                         inputId = "sortpoint",
                         label = "Sort patient-specific values",
-                        value = FALSE
+                        value = apppars$sort_points
                       )
                     ),
                     shiny::checkboxInput(
@@ -552,7 +552,7 @@ elaborator_ui <- function() {
                           placement = "right"
                         )
                       ),
-                      value = FALSE
+                      value = apppars$lines_data
                     ),
                   conditionalPanel(condition = "input.con_lin == true",
                     prettyRadioButtons(
@@ -564,7 +564,7 @@ elaborator_ui <- function() {
                         "Custom visits" = "custom_visits",
                         "All grey" = "all_grey"
                       ),
-                      selected = "first_last",
+                      selected = apppars$con_lin_options,
                       status = "warning",
                       inline = TRUE
                     )
@@ -573,9 +573,9 @@ elaborator_ui <- function() {
                     shiny::checkboxGroupInput(
                       inputId = "custom_visits",
                       label = "",
-                      choices = NULL,
-                      selected = NULL,
-                      inline = TRUE
+                      choices = apppars$visit_choices_lin,
+                      selected = apppars$custom_visits_lin #,
+                      # inline = TRUE
                     ),
                     conditionalPanel(condition = "input.custom_visits.length != 2",
                       HTML("<p style='color: red'> Please select exactly two visits </p>")
@@ -601,7 +601,7 @@ elaborator_ui <- function() {
                         "Sign test" = "signtest",
                         "t-test" = "ttest"
                       ),
-                      selected = "none",
+                      selected = apppars$stattest,
                       status = "warning"
                     ),
                     conditionalPanel(condition = "input.trtcompar.length > 1 | input.stattest == 'none'",
@@ -633,8 +633,8 @@ elaborator_ui <- function() {
                       shiny::checkboxGroupInput(
                         inputId = "trtcompar",
                         label = "",
-                        choices = NULL,
-                        selected = NULL
+                        choices = apppars$visit_choices_compar,
+                        selected = apppars$trtcompar
                       ),
                       shiny::conditionalPanel(condition = "output.check <2",
                         shiny::helpText(
@@ -658,7 +658,7 @@ elaborator_ui <- function() {
                         label = tags$div(tags$h5(" ")),
                         min = 0,
                         max = 0.2,
-                        value = 0.01,
+                        value = apppars$pcutoff,
                         step = 0.005
                       )
                     )
@@ -1371,7 +1371,7 @@ elaborator_ui <- function() {
                     label = '',
                     min = 0,
                     max = 5,
-                    value = 0,
+                    value = apppars$cex_trend,
                     step = 0.5
                   )
                 ),
@@ -1390,7 +1390,7 @@ elaborator_ui <- function() {
                       'Range' = 'Range',
                       'Reference Range' = 'Reference Range'
                       ),
-                    selected = "InQuRa",
+                    selected = apppars$qual_method,
                     status = "warning"
                   )
                 ),
@@ -1405,7 +1405,7 @@ elaborator_ui <- function() {
                     label = "",
                     min = 0,
                     max = 20,
-                    value = 0,
+                    value = apppars$qual_percent,
                     step = 0.5
                   )
                 ),
@@ -1417,7 +1417,7 @@ elaborator_ui <- function() {
                     inputId = 'select.pal1',
                     label = "",
                     choices = names(colChoice),
-                    selected = names(colChoice)[1],
+                    selected = apppars$colChoice,
                     multiple = FALSE,
                     options = list(
                       `live-search` = TRUE,
@@ -1672,7 +1672,7 @@ elaborator_ui <- function() {
                   label = '',
                   min = 0,
                   max = 5,
-                  value = 0,
+                  value = apppars$cex_rvbp,
                   step = 0.5
                 )
               ),
@@ -1693,7 +1693,7 @@ elaborator_ui <- function() {
                     "above ULN" = "greater",
                     "below LLN" = "less"
                   ),
-                  selected = "within",
+                  selected = apppars$refrange_criterion,
                   status = "warning"
                 )
               ),
@@ -1710,7 +1710,7 @@ elaborator_ui <- function() {
                 shiny::numericInput(
                   inputId = "abnormal_values_factor",
                   label = "",
-                  value = 1,
+                  value = apppars$abnormal_values_factor,
                   min = 0,
                   step = 0.1
                 )
