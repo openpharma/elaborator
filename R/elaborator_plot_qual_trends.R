@@ -200,7 +200,7 @@ elaborator_plot_qual_trends <- function(
 
               mg = unlist(lapply(1:n, function(i) sum(E[i, ])))
 
-              s = matrix("=", n, m); s[E < 0]="-"; s[E > 0]="+"
+              s = matrix("=", n, m); s[E < 0]="\u2212"; s[E > 0]="+"
               s = apply(s, 1, paste, collapse = " ")
 
               E = data.frame(mz, E, s, mg)
@@ -419,7 +419,7 @@ elaborator_plot_qual_trends <- function(
 
             mg = unlist(lapply(1:n,function(i) sum(E[i,])))
 
-            s=matrix("=",n,m); s[E < 0]="-"; s[E > 0]="+"
+            s=matrix("=",n,m); s[E < 0]="\u2212"; s[E > 0]="+"
             s=apply(s,1,paste,collapse=" ")
 
             E=data.frame(mz,E,s,mg)
