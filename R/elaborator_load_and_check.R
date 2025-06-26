@@ -3,6 +3,7 @@
 #' @param data_switch app widgets input wheter rdata or csv files or demo data should be uploaded
 #' @param rdata_file_path path of rdata file
 #' @param csv_file_path path of csv file
+#' @param local_robject_name name of file in current workspace
 #' @param loaded_file saved file for demo data (outdated)
 #' @param separator separator (for csv file upload only)
 #' @param quote quote (for csv file upload only)
@@ -17,13 +18,14 @@ elaborator_load_and_check <- function(
   data_switch = '*.RData file',
   rdata_file_path = NULL,
   csv_file_path = NULL,
+  local_robject_name = NULL,
   loaded_file = NULL,
   separator = NULL,
   quote = NULL,
   decimal = NULL
 ) {
   # need a non-empty data path
-    if (!is.null(rdata_file_path) || !is.null(csv_file_path) || !is.null(loaded_file) || data_switch == "Demo data") {
+    if (!is.null(rdata_file_path) || !is.null(csv_file_path) || !is.null(loaded_file) || data_switch %in% c("Demo data", "Local R Object")) {
       required_elaborator_vars <- c("SUBJIDN", "AVISIT", "TRTP", "LBTESTCD", "LBORRES", "LBORNRLO", "LBORNRHI")
       if (data_switch == 'Demo data') {
         elaborator_data <- get(load(here::here("data", "elaborator_demo.RData")))
@@ -38,7 +40,52 @@ elaborator_load_and_check <- function(
             error_message <- NULL
         }
       }
-      if (data_switch == '*.RData file') {
+      else if (data_switch == 'Local R Object') {
+        if (!exists(local_robject_name)) {
+          # error message if no local R object with specified name found
+            error_message <- paste0(
+              "No local R object with name ",
+              local_robject_name,
+              " found."
+            )
+            elaborator_data <- NULL
+            return(
+              list(
+                data = elaborator_data,
+                message = error_message
+              )
+            )
+          } else if (!is.data.frame(get(local_robject_name))) {
+              # error message if found object is no data frame
+              error_message <- paste0(
+                "No local R data frame with name ",
+                local_robject_name,
+                " found."
+              )
+              elaborator_data <- NULL
+              return(
+                list(
+                  data = elaborator_data,
+                  message = error_message
+                )
+              )
+          }else {
+            elaborator_data <- get(local_robject_name)
+
+            # error message if required variables are missing
+            if (!all(required_elaborator_vars %in% names(elaborator_data))) {
+              error_message <- paste0(
+                "The following required variable(s) <br> is/are missing: <br>",
+                paste(required_elaborator_vars[which(!required_elaborator_vars %in% names(elaborator_data))], collapse = ", "),
+                ".<br> Please check the data manual <br> for further information."
+              )
+              elaborator_data <- NULL
+            } else {
+              error_message <- NULL
+            }
+          }
+        }
+      else if (data_switch == '*.RData file') {
         if (!is.null(rdata_file_path)) {
           # error message if selected data have a different format than rdata
           if (!utils::tail(strsplit(rdata_file_path, ".", fixed = TRUE)[[1]], n = 1) %in% c("rdata","rData","Rdata","RData")) {
@@ -117,7 +164,7 @@ elaborator_load_and_check <- function(
                 error_message <- paste0(
                   "The following required variable(s) <br> is/are missing: <br>",
                   paste(required_elaborator_vars[which(!required_elaborator_vars %in% names(elaborator_data))], collapse = ", <br>"),
-                  ". <br> Try to change separator and/or quoute <br> input as in csv data set.
+                  ". <br> Try to change separator and/or quote <br> input as in csv data set.
                   <br> For further information <br> check the data manual."
                 )
                 elaborator_data <- NULL

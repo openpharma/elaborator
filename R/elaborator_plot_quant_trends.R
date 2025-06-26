@@ -24,7 +24,7 @@
 #'  Possible options are "first_last","each_visit",
 #'  "custom_visits" or "all_grey". In the first three options
 #'  decrease is colorized blue and an increase orange.
-#'@param custom_visits if col_lines_options is "custom_visits" then two visits
+#'@param custom_visits_lin if col_lines_options is "custom_visits" then two visits
 #'  need to be selected. Otherwise all lines are grey.
 #'@return No return value. Generates plots for the quantitative trends analysis.
 #'
@@ -50,7 +50,7 @@ elaborator_plot_quant_trends <- function(
   outliers,
   tolerated_percentage = 100,
   color_lines_options,
-  custom_visits = NULL
+  custom_visits_lin = NULL
 ) {
 
   TRTP <- LBTESTCD <- NULL
@@ -170,7 +170,7 @@ elaborator_plot_quant_trends <- function(
       outliers_logical = outliers,
       sort_points = sortpoints,
       col_lines_options = color_lines_options,
-      custom_visit = custom_visits
+      custom_visits_lin = custom_visits_lin
     ), .keep = TRUE
   )
 
@@ -194,7 +194,7 @@ elaborator_plot_quant_trends <- function(
       outliers_logical = outliers,
       sort_points = sortpoints,
       col_lines_options = color_lines_options,
-      custom_visit = custom_visits
+      custom_visits_lin = custom_visits_lin
     ), .keep = TRUE
   )
   }

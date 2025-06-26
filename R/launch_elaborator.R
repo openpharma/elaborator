@@ -5,7 +5,10 @@
 #' @description
 #' Starts the elaborator application in the client's browser.
 #'
-#' @param elaborator_data data derived for the elaborator app
+#' @param data data derived for the elaborator app, must be a string, which can be either a path to a .Rdata or .csv file or "demo_data" for the demo data. Any other string will be assumed to be an R dataset from the current workspace.
+#' @param csv_sep he field separator character. Values on each line of the file are separated by this character. If sep = "" the separator is ‘white space’, that is one or more spaces, tabs, newlines or carriage returns. (defaults to ",")
+#' @param csv_dec the character used in the file for decimal points (defaults to ".")
+#' @param csv_quote the set of quoting characters. To disable quoting altogether, use quote = "" (defaults to '"', i.e. double quotation marks)
 #' @param host host link (defaults to the local machine "127.0.0.1")
 #' @param port port number (randomly chosen unless specified as a certain number)
 #' @param browser path to browser exe (defaults to standard browser)
@@ -18,11 +21,10 @@
 #' @param sort_points sort patient-specific values (only relevant if draw_points_logical = TRUE) in quantitative trends (defaults to FALSE)
 #' @param lines_data draw connection lines in quantitative trends (defaults to FALSE)
 #' @param con_lin_options options for connection lines (only relevant if lines_data = TRUE) in quantitative trends (options: "first_last", "each_visit", "custom_visits", "all_grey"; defaults to "first_last")
-#' @param visit_choices_lin if con_lin_options = "custom_visits", a list of visits to be displayed in the panel must be specified here (these are the possible visit choices). Only choose this option if you know what you are doing! There is no check against the data if these visits actually exist.
-#' @param custom_visits_lin if con_lin_options = "custom_visits", then exactly two visits of the visit_choices_lin must be specified. Only choose this option if you know what you are doing! There is no check against the data if these visits actually exist.
+#' @param custom_visits_lin if con_lin_options = "custom_visits", then exactly two visits must be specified.
 #' @param stattest choose statistical test in quantitative trends (options: "none", "signtest", "ttest"; defaults to "none")
-#' param trtcompar if stattest != "none" in quantitative trends
-#' @param pcutoff p-value cutoff in quantitative trends
+#' @param custom_visits_compar if stattest != "none" in quantitative trends, then the visits to be compared must be specified.
+#' @param pcutoff p-value cutoff in quantitative trends (defaults to 0.01)
 #' @param cex_trend font size in qualitative trends (defaults to 0)
 #' @param qual_method method for defining stable trend in qualitative trends (options: "InQuRa", "Range", "Reference Range" ; defaults to "InQuRa")
 #' @param qual_percent select percentage for defining stable trend in qualitative trends (defaults to 0)
@@ -94,7 +96,10 @@
 #' @return A shiny app
 
 launch_elaborator <- function(
-    elaborator_data = NULL,
+    data = NULL,
+    csv_sep = ",",
+    csv_dec = ".",
+    csv_quote = '"',
     host = "0.0.0.0",
     port = NULL,
     browser = NULL,
@@ -107,11 +112,9 @@ launch_elaborator <- function(
     sort_points = FALSE,
     lines_data = FALSE,
     con_lin_options = "first_last",
-    visit_choices_lin = NULL,
     custom_visits_lin = NULL,
     stattest = "none",
-    # visit_choices_compar = NULL,
-    # trtcompar = NULL,
+    custom_visits_compar = NULL,
     pcutoff = 0.01,
     cex_trend = 0,
     qual_method = "InQuRa",
@@ -128,9 +131,10 @@ launch_elaborator <- function(
 
 
   # check parameter options ####
+  if(!is.null(data) & (!is.character(data) | length(data) != 1)){stop("Parameter data must be a character of length 1")}
 
   # parameters for graphic options
-  if(zoompx < 10 | zoompx > 280){stop("Parameter zoompx must be between 10 and 280")}
+  if(zoompx < 10 | zoompx > 820){stop("Parameter zoompx must be between 10 and 820")}
   if(panelheight < 400 | panelheight > 2400){stop("Parameter panelheight must be between 400 and 2400")}
 
   # parameters for data upload
@@ -152,10 +156,10 @@ launch_elaborator <- function(
     apppars["lines_data"]<- TRUE
     warning("Parameter con_lin_options was not the default but lines_data was FALSE. Parameter lines_data was set to TRUE, assuming you want to display connection lines.", immediate. = TRUE)
   }
-  if((con_lin_options == "custom_visits" | !is.null(visit_choices_lin)| !is.null(custom_visits_lin)) & any(con_lin_options != "custom_visits", is.null(visit_choices_lin), is.null(custom_visits_lin))){
-    stop("If individual choices for custom visits should be chosen, all three parameters custom_visits_lin, visit_choices_lin, and custom_visits_lin need to be specified. Only choose this option, if you know what you are doing! There are no checks against the data if these visits actually exist.")
+  if((con_lin_options == "custom_visits" | !is.null(custom_visits_lin)) & any(con_lin_options != "custom_visits", is.null(custom_visits_lin))){
+    stop("If individual choices for custom visits should be chosen, then con_lin_options needs to be 'custom_visits' and custom_visits_lin needs to be specified.")
   }
-  if(!is.null(custom_visits_lin) & (any(!(custom_visits_lin %in% visit_choices_lin)) | length(custom_visits_lin) != 2)){stop("custom_visits_lin must be a subset of visit_choices_lin of length 2.")}
+  if(con_lin_options == "custom_visits" & length(custom_visits_lin) != 2){stop("custom_visits_lin must be of length 2.")}
 
     # parameters for statistical tests
   if(pcutoff < 0 | pcutoff > 0.2){stop("Parameter pcutoff must be between 0 and 0.2")}

@@ -136,6 +136,19 @@ boxPlotColor <- function(input, output, session, dat, name, start_color, number)
 #### dashboardPage ####
 elaborator_ui <- function(apppars) {
 
+  # check type of specified data (NULL, .RData, .csv, Demo data)
+  datatype_lower <- if(is.null(apppars$data)){NULL}else{tolower(rev(unlist(strsplit(apppars$data, split = ".", fixed = TRUE)))[1])}
+  if(is.null(datatype_lower)){datatype <- NULL}else{
+    if(datatype_lower == "rdata"){datatype <- '*.RData file'}else{
+      if(datatype_lower == "csv"){datatype <- '*.CSV file'}else{
+        if(datatype_lower == "demo_data"){datatype <- 'Demo data'}else{
+          # if data is specified but is neither .csv- or .rdata-path, nor demo data, assume data input is a local R object
+          datatype <- 'Local R Object'
+        }
+      }
+    }
+  }
+
   shinydashboard::dashboardPage(
   title = "elaborator",
   shinydashboard::dashboardHeader(
@@ -294,7 +307,8 @@ elaborator_ui <- function(apppars) {
           status ="warning",
           shape = 'round',
           animation = 'smooth',
-          choices = c('*.RData file', '*.CSV file')
+          choices = if(is.null(datatype)){c('*.RData file', '*.CSV file')}else{if(datatype %in% c('*.RData file', '*.CSV file')){c('*.RData file', '*.CSV file')}else{if(datatype == "Demo data"){c('*.RData file', '*.CSV file', 'Demo data')}else{if(datatype == 'Local R Object'){c('*.RData file', '*.CSV file', 'Local R Object')}}}},
+          selected = if(is.null(datatype)){NULL}else{if(datatype %in% c('*.RData file', '*.CSV file', 'Demo data', 'Local R Object')){datatype}else{NULL}}
         ),
         htmlOutput("err_message"),
         tags$head(
@@ -305,6 +319,27 @@ elaborator_ui <- function(apppars) {
            }"
           )
         ),
+        # pass pre-specified data path and .csv-file input options in launch_elaborator() invisibly to server
+        shinyjs::useShinyjs(),
+        shinyjs::hidden(
+          shiny::textInput(
+            inputId = "datapath",
+            label = NULL,
+            value = apppars$data),
+          shiny::textInput(
+            inputId = "csv_sep",
+            label = NULL,
+            value = apppars$csv_sep),
+          shiny::textInput(
+            inputId = "csv_dec",
+            label = NULL,
+            value = apppars$csv_dec),
+          shiny::textInput(
+            inputId = "csv_quote",
+            label = NULL,
+            value = apppars$csv_quote)
+         )
+        ,
         shiny::uiOutput('impdata'),
         shiny::conditionalPanel(condition = "output.flag == true",
           shiny::selectizeInput(
@@ -571,13 +606,15 @@ elaborator_ui <- function(apppars) {
                   ),
                   conditionalPanel(condition = "input.con_lin_options == 'custom_visits'",
                     shiny::checkboxGroupInput(
-                      inputId = "custom_visits",
+                      inputId = "custom_visits_lin",
                       label = "",
-                      choices = apppars$visit_choices_lin,
+                      # choices is set to custom_visits_lin here so it is not empty but it will later be overwritten
+                      # by the available visits
+                      choices = apppars$custom_visits_lin,
                       selected = apppars$custom_visits_lin #,
                       # inline = TRUE
                     ),
-                    conditionalPanel(condition = "input.custom_visits.length != 2",
+                    conditionalPanel(condition = "input.custom_visits_lin.length != 2",
                       HTML("<p style='color: red'> Please select exactly two visits </p>")
                     )
                   )
@@ -604,7 +641,7 @@ elaborator_ui <- function(apppars) {
                       selected = apppars$stattest,
                       status = "warning"
                     ),
-                    conditionalPanel(condition = "input.trtcompar.length > 1 | input.stattest == 'none'",
+                    conditionalPanel(condition = "input.custom_visits_compar.length > 1 | input.stattest == 'none'",
                       shiny::actionButton(
                         inputId = "go_select2",
                         label = "Update!",
@@ -631,10 +668,12 @@ elaborator_ui <- function(apppars) {
                         expanded = TRUE
                       ),
                       shiny::checkboxGroupInput(
-                        inputId = "trtcompar",
+                        inputId = "custom_visits_compar",
                         label = "",
-                        choices = apppars$visit_choices_compar,
-                        selected = apppars$trtcompar
+                        # choices is set to custom_visits_compar here so it is not empty but it will later be overwritten
+                        # by the available visits
+                        choices = apppars$custom_visits_compar,
+                        selected = apppars$custom_visits_compar
                       ),
                       shiny::conditionalPanel(condition = "output.check <2",
                         shiny::helpText(

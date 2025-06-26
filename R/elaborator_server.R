@@ -75,6 +75,13 @@ elaborator_server <- function(input, output, session) {
     'sequential yellow - orange - red'  = list('col' = brewer.pal(9, 'YlOrRd'),'gradient' = TRUE)
   )
 
+  # Set counters for activation of certain events; can be used to skip the first
+  # time an action takes effect, which would sometimes overwrite initial settings
+  # from launch_elaborator() right at the start of the app
+  counters <- shiny::reactiveValues(
+    count_visit_events = 0,
+    count_impswitch_events = 0)
+
   #### Import data ####
   output$impdata <- shiny::renderUI({
     if (input$impswitch == '*.RData file') {
@@ -105,7 +112,7 @@ elaborator_server <- function(input, output, session) {
                         'Tab' = '\t'),
             status ="warning",
             animation = "smooth",
-            selected = ','
+            selected = input$csv_sep
           ),
           shinyWidgets::prettyRadioButtons(
             inputId = 'quote',
@@ -116,7 +123,7 @@ elaborator_server <- function(input, output, session) {
               'Double Quote (")' = '"',
               "Single Quote (')" = "'"
             ),
-            selected = '"',
+            selected = input$csv_quote,
             status ="warning",
             animation = "smooth"
           ),
@@ -130,7 +137,7 @@ elaborator_server <- function(input, output, session) {
               'Point (.)' = '.',
               'Comma (,)' = ','
             ),
-            selected = '.'
+            selected = input$csv_dec
           )
         )
       )
@@ -147,6 +154,7 @@ elaborator_server <- function(input, output, session) {
       )
     }
   })
+
 
   #### data pre-processing for graphs ####
   # 1. load data and check for requirements
@@ -179,21 +187,26 @@ elaborator_server <- function(input, output, session) {
 
   raw_data_and_warnings <- shiny::reactive({
     input$impswitch
+    # if a datapath is given in launch_elaborator(), use it initially; otherwise use file input within the app
+    rdata_path<- if(input$impswitch == '*.RData file' & !is.null(input$datapath)){if(counters$count_impswitch_events <= 1 & input$datapath != ""){input$datapath}else{input$file$datapath}}else{NULL}
+    csv_path<- if(input$impswitch == '*.CSV file' & !is.null(input$datapath)){if(counters$count_impswitch_events <= 1 & input$datapath != ""){input$datapath}else{input$csv_file$datapath}}else{NULL}
+    local_robject<- if(input$impswitch == 'Local R Object' & !is.null(input$datapath) & counters$count_impswitch_events < 1){input$datapath}else{NULL}
     tmp <- elaborator_load_and_check(
       data_switch = input$impswitch,
-      rdata_file_path = input$file$datapath,
-      csv_file_path = input$csv_file$datapath,
+      rdata_file_path = rdata_path,
+      csv_file_path = csv_path,
+      local_robject_name = local_robject,
       loaded_file = app_input(),
       separator = input$sep,
       quote = input$quote,
       decimal = input$dec
     )
+
     if (!is.null(tmp$data)) {
       tmp$data <- elaborator_fill_with_missings(
         elab_data = tmp$data
       )
     }
-
     #function to expand data by subject id, visits and lab parameter to
     #avoid wrong calculations by tolerated missing function
     elaborator_expand_grid <- function(dat){
@@ -597,8 +610,8 @@ elaborator_server <- function(input, output, session) {
             dat_filt,
             #shiny::isolate(data_with_only_non_missings_over_visits()),
             signtest = ifelse(shiny::isolate(input$stattest) == "signtest", TRUE, FALSE),
-            Visit1 = shiny::isolate(input$trtcompar)[1],
-            Visit2 = shiny::isolate(input$trtcompar)[-1],
+            Visit1 = shiny::isolate(input$custom_visits_compar)[1],
+            Visit2 = shiny::isolate(input$custom_visits_compar)[-1],
             labcolumn = "LBTESTCD",
             cols = b.col,
             pcutoff = shiny::isolate(input$pcutoff),
@@ -614,7 +627,7 @@ elaborator_server <- function(input, output, session) {
             outliers = shiny::isolate(input$outlier),
             tolerated_percentage = shiny::isolate(input$select.toleratedPercentage),
             color_lines_options = shiny::isolate(input$con_lin_options),
-            custom_visits = shiny::isolate(input$custom_visits)
+            custom_visits_lin = shiny::isolate(input$custom_visits_lin)
           )
         }
       } else {
@@ -1259,7 +1272,7 @@ elaborator_server <- function(input, output, session) {
   shiny::outputOptions(output, "ai", suspendWhenHidden = FALSE)
 
   output$check <- shiny::reactive({
-    length(input$trtcompar)
+    length(input$custom_visits_compar)
   })
 
   shiny::outputOptions(output, 'check', suspendWhenHidden = FALSE)
@@ -1331,13 +1344,13 @@ elaborator_server <- function(input, output, session) {
 
   #### eventReactive ####
   tcomp <- shiny::eventReactive(c(input$go_select2), {
-    input$trtcompar
+    input$custom_visits_compar
   })
 
   box_col <- shiny::eventReactive(input$go, {
     shiny::req(input$select.visit)
     visits <- input$select.xvisit
-    selected <- input$trtcompar
+    selected <- input$custom_visits_compar
     b.col <- c(
       input$'id1-col', input$'id2-col', input$'id3-col', input$'id4-col', input$'id5-col', input$'id6-col',
       input$'id7-col', input$'id8-col', input$'id9-col', input$'id10-col', input$'id11-col', input$'id12-col',
@@ -1359,7 +1372,7 @@ elaborator_server <- function(input, output, session) {
 
   border.col <-shiny::eventReactive(c(input$go_select2), {
     choices <- input$select.visit
-    selected <- input$trtcompar
+    selected <- input$custom_visits_compar
     col <- rep(elaborator_transform_transparent("black", alpha = 70), length(choices))
     col[choices %in% selected] <- "black"
     col
@@ -1410,6 +1423,10 @@ elaborator_server <- function(input, output, session) {
 
 
   #### observeEvent ####
+
+  shiny::observeEvent(ignoreInit = TRUE, list(input$file, input$csv_file, input$impswitch), {
+      counters$count_impswitch_events <- counters$count_impswitch_events + 1
+  })
 
   shiny::observeEvent(input$apply_ref_plot, {
     if (input$apply_ref_plot >= 1) {
@@ -1575,22 +1592,39 @@ elaborator_server <- function(input, output, session) {
     selected <- c(choices[1], choices[length(choices)])
     shiny::updateCheckboxGroupInput(
       session,
-      inputId = "custom_visits",
+      inputId = "custom_visits_lin",
       choices = choices,
       selected = selected
     )
    }
  })
 
-  shiny::observeEvent(input$select.visit, {
-    choices  <- input$select.visit
-    selected <- c(choices[1], choices[length(choices)])
+ shiny::observeEvent(input$select.visit, {
+   counters$count_visit_events <- counters$count_visit_events + 1
+   choices  <- input$select.visit
+   # skip the first iteration to avoid overwriting a function call argument for "custom_visits_compar"
+   # with the default (first and last visit) before the initial settings were used
+   if(is.null(input$custom_visits_compar) | counters$count_visit_events > 1){
+    selected_visits_compar <- c(choices[1], choices[length(choices)])
+    }else{selected_visits_compar<- input$custom_visits_compar}
     shiny::updateCheckboxGroupInput(
       session,
-      inputId = "trtcompar",
+      inputId = "custom_visits_compar",
       choices = choices,
-      selected = selected
+      selected = selected_visits_compar
     )
+    # skip the first iteration to avoid overwriting a function call argument for "custom_visits_lin"
+    # with the default (first and last visit) before the initial settings were used
+    if(input$con_lin_options == 'custom_visits'){
+      if(counters$count_visit_events > 1){selected_visits_lin <- c(choices[1], choices[length(choices)])}
+      else{selected_visits_lin<- input$custom_visits_lin}
+      shiny::updateCheckboxGroupInput(
+        session,
+        inputId = "custom_visits_lin",
+        choices = choices,
+        selected = selected_visits_lin
+      )
+    }
     shinyWidgets::updatePickerInput(
       session,
       inputId = "select.ai.first",
@@ -1647,8 +1681,8 @@ elaborator_server <- function(input, output, session) {
         elaborator_plot_quant_trends(
           shiny::isolate(data_with_only_non_missings_over_visits()),
           signtest = ifelse(shiny::isolate(input$stattest) == "signtest", TRUE, FALSE),
-          Visit1 = shiny::isolate(input$trtcompar)[1],
-          Visit2 = shiny::isolate(input$trtcompar)[-1],
+          Visit1 = shiny::isolate(input$custom_visits_compar)[1],
+          Visit2 = shiny::isolate(input$custom_visits_compar)[-1],
           labcolumn = "LBTESTCD",
           cols = b.col,
           pcutoff = shiny::isolate(input$pcutoff),
@@ -1664,7 +1698,7 @@ elaborator_server <- function(input, output, session) {
           outliers = shiny::isolate(input$outlier),
           tolerated_percentage = shiny::isolate(input$select.toleratedPercentage),
           color_lines_options = shiny::isolate(input$con_lin_options),
-          custom_visits = shiny::isolate(input$custom_visits)
+          custom_visits = shiny::isolate(input$custom_visits_lin)
         )
       }, res = shiny::isolate(input$zoompx) / 3
       )
@@ -1757,7 +1791,7 @@ elaborator_server <- function(input, output, session) {
   shiny::observeEvent(c(input$go_select2), {
     shiny::req(
       data_with_selected_factor_levels(),
-      input$trtcompar,
+      input$custom_visits_compar,
       input$stattest,
       input$select.treatments,
       shiny::isolate(input$select.lab),
@@ -1765,8 +1799,8 @@ elaborator_server <- function(input, output, session) {
     )
 
     dat <- data_with_selected_factor_levels()
-    T1 <- input$trtcompar[1]
-    T2 <- input$trtcompar[-1]
+    T1 <- input$custom_visits_compar[1]
+    T2 <- input$custom_visits_compar[-1]
     signtest <- input$stattest
 
     if (input$stattest == "signtest" | input$stattest == "ttest") {
@@ -1782,7 +1816,7 @@ elaborator_server <- function(input, output, session) {
       statistical_test_results$var <- NULL
     }
 
-    # if (input$stattest == "signtest" && length(input$trtcompar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
+    # if (input$stattest == "signtest" && length(input$custom_visits_compar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
     #   values$default <- elaborator_derive_test_values(
     #     data = dat,
     #     signtest = TRUE,
@@ -1791,7 +1825,7 @@ elaborator_server <- function(input, output, session) {
     #     lab_column = "LBTESTCD"
     #   )
     #
-    # } else if (input$stattest== "ttest" && length(input$trtcompar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
+    # } else if (input$stattest== "ttest" && length(input$custom_visits_compar) >= 2 && length(unique(dat$AVISIT)) >= 2) {
     #   values$default <- elaborator_derive_test_values(
     #     data = dat,
     #     signtest = FALSE,
@@ -2163,14 +2197,26 @@ elaborator_server <- function(input, output, session) {
   })
 
   shiny::observe({
-    if (file.exists(here::here("data", "elaborator_demo.RData"))) {
+    if (file.exists(here::here("data", "elaborator_demo.RData")) & input$impswitch != "Local R Object") {
       updatePrettyRadioButtons(
         session,
         inputId = "impswitch",
         label = 'Select file format',
         choices = c('*.RData file', '*.CSV file','Demo data'),
-        prettyOptions = list(status = "warning")
+        prettyOptions = list(status = "warning"),
+        selected = input$impswitch
       )
+    }else{
+      if(file.exists(here::here("data", "elaborator_demo.RData")) & input$impswitch == "Local R Object"){
+        updatePrettyRadioButtons(
+          session,
+          inputId = "impswitch",
+          label = 'Select file format',
+          choices = c('*.RData file', '*.CSV file','Demo data', "Local R Object"),
+          prettyOptions = list(status = "warning"),
+          selected = input$impswitch
+        )
+      }
     }
   })
 }

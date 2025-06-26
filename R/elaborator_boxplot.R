@@ -21,7 +21,7 @@
 #'                          Possible options are "first_last","each_visit",
 #'                          "custom_visits" or "all_grey". In the first three options
 #'                          decrease is colorized blue and an increase orange.
-#' @param custom_visit if col_lines_options is "custom_visits" then two visits
+#' @param custom_visits_lin if col_lines_options is "custom_visits" then two visits
 #'                     need to be selected. Otherwise all lines are grey.
 #'
 #'@return No return value. Boxplots are generated, used in elaborator.
@@ -43,7 +43,7 @@ elaborator_boxplot <- function(
   incProgress,
   outliers_logical,
   col_lines_options,
-  custom_visit
+  custom_visits_lin
 ) {
   LBORRES <- complete.cases <- AVISIT <- NULL
   raw <- elab_data$raw[[1]]
@@ -168,7 +168,7 @@ elaborator_boxplot <- function(
         )
       }
       if (col_lines_options == "custom_visits") {
-        custom <- custom_visit
+        custom <- custom_visits_lin
 
         if (length(custom) == 2) {
           index_custom <- which(colnames(tmp) %in% custom)
@@ -218,7 +218,7 @@ elaborator_boxplot <- function(
       }
 
       if (col_lines_options == "custom_visits") {
-        custom <- custom_visit
+        custom <- custom_visits_lin
         if (length(custom) == 2) {
           index_custom <- which(colnames(tmp) %in% custom)
 
