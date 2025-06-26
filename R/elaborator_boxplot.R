@@ -141,14 +141,14 @@ elaborator_boxplot <- function(
   if (lines_data) {
     if (sort_points & draw_points_logical) {
       tmp <- elab_data$differences[[1]]
+      tmp <- tmp %>%
+        dplyr::select(as.character(levels(raw$AVISIT))[as.character(levels(raw$AVISIT)) %in% as.character(unique(raw$AVISIT))])
       index <- ((colSums(is.na(tmp)) / (colSums(!is.na(tmp))  + colSums(is.na(tmp))))  * 100) <= tol_percentage
       tmp <- tmp[,index]
       tmp <- tmp[complete.cases(tmp),]
-      tmp <- tmp %>%
-        dplyr::select(as.character(levels(raw$AVISIT))[as.character(levels(raw$AVISIT)) %in% as.character(unique(raw$AVISIT))])
-
       y <- t(tmp)
-      x <- t(matrix(sort(as.numeric(raw$AVISIT) + sort(rep(seq(-0.25, 0.25, len = length(unique(raw$SUBJIDN))),length(unique(raw$AVISIT))))), dim(t(tmp))[2],dim(t(tmp))[1]))
+
+      x <- t(matrix(sort(as.numeric(raw$AVISIT) + rep(seq(-0.25, 0.25, len = length(unique(raw$SUBJIDN))),length(unique(raw$AVISIT)))), dim(t(tmp))[2],dim(t(tmp))[1]))
       rank_order <- t(apply(y,1,rank))
       x_ordered <- t(sapply(1:nrow(rank_order), function(i) x[i,][rank_order[i,]]))
 
@@ -277,7 +277,7 @@ elaborator_boxplot <- function(
     x2 <- raw %>% arrange(AVISIT,LBORRES)
     if(sort_points) {
       graphics::points(
-        x = sort(as.numeric(raw$AVISIT) + sort(rep(seq(-0.25,0.25,len=length(unique(raw$SUBJIDN))),length(unique(raw$AVISIT))))),
+        x = sort(as.numeric(raw$AVISIT) + rep(seq(-0.25,0.25,len=length(unique(raw$SUBJIDN))),length(unique(raw$AVISIT)))),
         y = x2$LBORRES,
         cex = 0.8,
         col = "#00000090",
