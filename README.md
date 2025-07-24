@@ -70,7 +70,7 @@ Laboratory parameters without reference range(s) are not analysed. Thus, for the
 <figure>
 <img src='inst/www/Fig3.png' alt='Graphic cannot be displayed' width='411' height='400'>
 <figcaption>
-<b>Figure 3</b>: <i>Example plot for reference-value based pattern analysis. The number of patients with hematocrit (HCT) values within the reference range(green) or outside the reference range(orange) at four visits, 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3', for the placebo group are shown. </i>
+<b>Figure 3</b>: <i>Example plot for reference-value based pattern analysis. The number of patients with platelets (PLAT) values within the reference range(green) or outside the reference range(orange) at four visits, 'Randomization', 'Treatment 1', 'End of Treatment' and 'Follow-up 3', for the placebo group are shown. </i>
 </figcaption>
 </figure>
 
