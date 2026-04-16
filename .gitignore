@@ -43,3 +43,6 @@ docs/
 
 # translation temp files
 po/*~
+.Rproj.user
+.DS_Store
+.quarto
