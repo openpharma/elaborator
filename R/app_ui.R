@@ -5,9 +5,7 @@
 #' @noRd
 app_ui <- function(request) {
   shiny::tagList(
-    # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic
     shiny::fluidPage(
       shinydashboard::dashboardPage(
         title = "elaborator",
@@ -270,16 +268,6 @@ app_ui <- function(request) {
         ),
         #### dashboardBody ####
         shinydashboard::dashboardBody(
-          tags$head(
-            tags$script(
-              '$(document).on("shiny:connected", function(e) {
-          Shiny.onInputChange("innerWidth", window.innerWidth);
-        });
-        $(window).resize(function(e) {
-          Shiny.onInputChange("innerWidth", window.innerWidth);
-        });'
-            )
-          ),
           shinyWidgets::chooseSliderSkin(
             skin = "Modern",
             color = "#f6ad82"
@@ -1715,17 +1703,6 @@ app_ui <- function(request) {
                   )
                 )
               )
-            )
-          ),
-          tags$script(
-            HTML("$('body').addClass('sidebar-mini');")
-          ),
-
-          tags$script(
-            HTML(
-              '$(document).ready(function() {
-        $("header").find("nav").append(\' <h4> A New Perspective on Laboratory Data </h4>\');
-        })'
             )
           )
         )
