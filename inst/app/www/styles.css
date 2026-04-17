@@ -1,0 +1,209 @@
+:root {
+    --color-bg: #E2F3F2;
+    --color-panel: #11c4d4;
+    --color-app: #00b4cb;
+    --color-highlight: #f6ad82;
+    
+}
+
+.shiny-notification {
+    position:fixed;
+    top: calc(50%);
+    left: calc(40%);
+    width: 350px;
+    font-size: 30px;
+    background-color: white;
+    color: #424242;
+}
+
+.shiny-progress {
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -100px !important;
+    margin-left: -250px !important;
+    color: blue;
+    font-size: 20px;
+    font-style: italic;
+}
+
+.content-wrapper, .right-side { 
+    background-color: var(--color-bg);
+}
+
+.checkbox-inline, .radio-inline {
+    text-align: center; 
+    margin-left: 0px;
+    margin-right: 0px;
+    padding: 0px;
+    width: 20%;
+}
+
+.main-sidebar .sidebar .sidebar-menu .treeview-menu  {
+    background-color: var(--color-panel) !important;
+}
+
+.main-sidebar .sidebar .sidebar-menu .treeview-menu li:hover a {
+    background-color: var(--color-app) !important;
+}
+
+.skin-blue .main-header .logo { 
+    background-color: var(--color-app);
+    &:hover {
+        background-color: var(--color-app);
+    }
+}
+
+.progress-bar{
+    background-color: var(--color-highlight);
+}
+
+.radio-item-warning {
+    color: var(--color-highlight);
+}
+
+.btn-warning {
+    background-color:var(--color-highlight);
+    &:hover {
+        background-color:var(--color-highlight);
+    }
+}
+.skin-blue .main-header .navbar {
+    background-color: var(--color-app);}
+/* main sidebar */
+.skin-blue .main-sidebar {
+    background-color: var(--color-app);
+}
+
+/* active selected tab in the sidebarmenu */
+.skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+    background-color: var(--color-panel);
+}
+
+/* other links in the sidebarmenu */
+.skin-blue .main-sidebar .sidebar .sidebar-menu a{
+    background-color: var(--color-app);
+    color: #ffffff;
+}
+
+.skin-blue .sidebar-menu > li.active > a,
+.skin-blue .sidebar-menu > li:hover > a {
+    border-left-color: var(--color-highlight);
+}
+
+/* other links in the sidebarmenu when hovered */
+.skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+    background-color: var(--color-panel);
+}
+
+/* toggle button when hovered  */
+.skin-blue .main-header .navbar .sidebar-toggle:hover{
+    background-color: var(--color-bg);
+}
+
+.skin-blue .main-sidebar .navbar {
+    background-color: var(--color-app);
+}
+
+h1 {
+    font-family: 'Arial';
+    line-height: 1.1;
+    color: #fff;
+}
+
+.selectize-dropdown-content {
+    max-height: 50px;
+}
+
+.selectize-input { 
+    background-color: #F8F8F8;
+}
+
+/* Action buttons */
+.action-button {
+    color: var(--color-bg);
+    background-color: var(--color-highlight);
+    border-color: var(--color-bg);
+}
+
+#insertBtn {
+    background-color:#47d2bc;
+    border-color: #000000;
+}
+
+#removeBtn {
+    background-color:#ffeeaa;
+    border-color: #000000;
+}
+
+.redo-button {
+    color: #fff; 
+    background-color: #f78300; 
+    border-color: #fff
+}
+
+/* Error message */
+#err_message {
+    color: red;
+    font-size: 12px;
+    margin: 20px;
+}
+
+/* Background and font colors */
+.bg-black {
+    background-color: var(--color-app) !important; 
+}
+
+.color-red {
+    color: red;
+}
+
+.color-white {
+    color: white;
+}
+
+.color-orange {
+    color: #f78300;
+}
+
+/* Icons */
+.fa-question {color:#e3e3e3}
+.fa-plus, .fa-minus {color:#ffffff}
+.fa-square, .decrease {color:#47d2bc}
+.fa-stop, .fa-square.increase {color: #ffeeaa}
+.fa-square.missing {color: #a9a9a9}
+.fa-flask {color: var(--color-bg)}
+
+/* File upload */
+.larger-font {
+    font-size: 150%;
+}
+
+/* Tables */
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(2) {
+    background-color: #dff2fd;
+}
+
+tr:nth-child{
+    background-color: #c9e1f6;
+}
+
+tr:first-child{
+    background-color: #11c4d4;
+}
+
+/* Header title */
+h4 {
+    color: white;
+}

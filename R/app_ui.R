@@ -152,15 +152,7 @@ app_ui <- function(request) {
                 shiny::actionButton(
                   inputId = "go3",
                   label = "Update selection!",
-                  icon = icon("redo"),
-                  style = paste0(
-                    "color: ",
-                    ColorBG,
-                    "; background-color: ",
-                    ColorHighlight,
-                    "; border-color: ",
-                    ColorBG
-                  )
+                  icon = icon("redo")
                 )
               ),
               shinydashboard::menuItem(
@@ -172,15 +164,7 @@ app_ui <- function(request) {
                 shiny::actionButton(
                   inputId = "go",
                   label = "Update Colors!",
-                  icon = icon("redo"),
-                  style = paste0(
-                    "color: ",
-                    ColorBG,
-                    "; background-color: ",
-                    ColorHighlight,
-                    "; border-color: ",
-                    ColorBG
-                  )
+                  icon = icon("redo")
                 )
               )
             ),
@@ -199,14 +183,6 @@ app_ui <- function(request) {
                 choices = c('*.RData file', '*.CSV file')
               ),
               htmlOutput("err_message"),
-              tags$head(
-                tags$style(
-                  "#err_message{color: red;
-           font-size: 12px;
-           margin-size: 20px;
-           }"
-                )
-              ),
               shiny::uiOutput('impdata'),
               shiny::conditionalPanel(
                 condition = "output.flag == true",
@@ -294,35 +270,6 @@ app_ui <- function(request) {
         ),
         #### dashboardBody ####
         shinydashboard::dashboardBody(
-          shiny::tags$head(
-            shiny::tags$style(
-              HTML(
-                ".shiny-notification {
-        position:fixed;
-        top: calc(50%);
-        left: calc(40%);
-        width: 350px;
-        font-size: 30px;
-        background-color: white;
-        font-color: black;
-        color: #424242;
-        }"
-              )
-            )
-          ),
-          tags$head(
-            tags$style(
-              ".shiny-progress {
-          top: 50% !important;
-          left: 50% !important;
-          margin-top: -100px !important;
-          margin-left: -250px !important;
-          color: blue;
-          font-size: 20px;
-          font-style: italic;
-        }"
-            )
-          ),
           tags$head(
             tags$script(
               '$(document).on("shiny:connected", function(e) {
@@ -333,100 +280,14 @@ app_ui <- function(request) {
         });'
             )
           ),
-          tags$head(
-            tags$style(
-              shiny::HTML(
-                paste0(
-                  ".content-wrapper, .right-side { background-color: ",
-                  ColorBG,
-                  ";}
-             .checkbox-inline, .radio-inline {text-align: center; margin-left: 0px;
-             margin-right: 0px;padding: 0px;width: 20%;}
-             .main-sidebar .sidebar .sidebar-menu .treeview-menu  {background-color: ",
-                  ColorPanel,
-                  " !important;}
-             .main-sidebar .sidebar .sidebar-menu .treeview-menu li:hover a {background-color: ",
-                  ColorApp,
-                  " !important;}
-             .skin-blue .main-header .logo { background-color: ",
-                  ColorApp,
-                  ";}
-             .skin-blue .main-header .logo:hover {background-color: ",
-                  ColorApp,
-                  ";}
-             .progress-bar{background-color:",
-                  ColorHighlight,
-                  ";}
-             .radio-item-warning {color: ",
-                  ColorHighlight,
-                  "}
-             .btn-warning{ background-color:",
-                  ColorHighlight,
-                  ";}
-             .btn-warning:hover{ background-color:",
-                  ColorHighlight,
-                  ";}
-             .skin-blue .main-header .navbar {background-color: ",
-                  ColorApp,
-                  ";}
-             /* main sidebar */
-             .skin-blue .main-sidebar {background-color: ",
-                  ColorApp,
-                  ";}
-             /* active selected tab in the sidebarmenu */
-             .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{background-color: ",
-                  ColorPanel,
-                  ";}
-             /* other links in the sidebarmenu */
-             .skin-blue .main-sidebar .sidebar .sidebar-menu a{background-color: ",
-                  ColorApp,
-                  ";color: #ffffff;}
-             .skin-blue .sidebar-menu > li.active > a,
-             .skin-blue .sidebar-menu > li:hover > a {border-left-color: ",
-                  ColorHighlight,
-                  ";}
-             /* other links in the sidebarmenu when hovered */
-             .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{background-color: ",
-                  ColorPanel,
-                  ";}
-             /* toggle button when hovered  */
-             .skin-blue .main-header .navbar .sidebar-toggle:hover{background-color: ",
-                  ColorBG,
-                  ";}
-             .skin-blue .main-sidebar .navbar { background-color: ",
-                  ColorApp,
-                  ";}
-              .skin-blue .main-header .navbar .sidebar-toggle:hover{background-color: ",
-                  ColorBG,
-                  ";}"
-                )
-              )
-            )
-          ),
           shinyWidgets::chooseSliderSkin(
             skin = "Modern",
             color = "#f6ad82"
-          ),
-          tags$style(
-            type = 'text/css',
-            paste0(".bg-black {background-color: ", ColorApp, "!important; }")
           ),
           shinydashboard::tabItems(
             shinydashboard::tabItem(
               tabName = "quant",
               shiny::fluidPage(
-                shiny::tags$head(
-                  shiny::tags$style(
-                    ".fa-question {color:#e3e3e3}",
-                    ".fa-plus {color:#ffffff}",
-                    ".fa-minus {color:#ffffff}",
-                    ".fa-square {color:#47d2bc}",
-                    ".fa-stop {color: #ffeeaa}",
-                    ".fa-flask {color: ",
-                    ColorBG,
-                    "}"
-                  )
-                ),
                 shiny::conditionalPanel(
                   condition = "output.flag == true",
                   shinydashboard::box(
@@ -538,9 +399,8 @@ app_ui <- function(request) {
                           ),
                           conditionalPanel(
                             condition = "input.custom_visits.length != 2",
-                            HTML(
-                              "<p style='color: red'> Please select exactly two visits </p>"
-                            )
+                            class = "color-red",
+                            "Please select exactly two visits"
                           )
                         )
                       ),
@@ -575,15 +435,7 @@ app_ui <- function(request) {
                             shiny::actionButton(
                               inputId = "go_select2",
                               label = "Update!",
-                              icon = icon("redo"),
-                              style = paste0(
-                                "color: ",
-                                ColorBG,
-                                "; background-color: ",
-                                ColorHighlight,
-                                "; border-color: ",
-                                ColorBG
-                              )
+                              icon = icon("redo")
                             )
                           )
                         ),
@@ -610,10 +462,9 @@ app_ui <- function(request) {
                             ),
                             shiny::conditionalPanel(
                               condition = "output.check <2",
+                              class = "color-red",
                               shiny::helpText(
-                                HTML(
-                                  '<p style="color:red"> Please select at least 2 visits! </p>'
-                                )
+                                "Please select at least 2 visits!"
                               )
                             )
                           ),
@@ -644,9 +495,8 @@ app_ui <- function(request) {
                       shiny::column(
                         2,
                         shiny::helpText(
-                          HTML(
-                            '<p style="color:white"> You can minimize/maximize this window with the -/+ button on the top right of the panel </p>'
-                          )
+                          class = "color-white",
+                          "You can minimize/maximize this window with the -/+ button on the top right of the panel"
                         ),
                         shiny::conditionalPanel(
                           condition = "input.stattest != 'none'",
@@ -655,8 +505,7 @@ app_ui <- function(request) {
                           bsplus::bs_embed_tooltip(
                             tag = h5(span(shiny::tagList(
                               tags$i(
-                                class = "fa-solid fa-square",
-                                style = "color:#47d2bc"
+                                class = "fa-solid fa-square decrease"
                               ),
                               "Decrease"
                             ))),
@@ -667,8 +516,7 @@ app_ui <- function(request) {
                           bsplus::bs_embed_tooltip(
                             tag = h5(span(shiny::tagList(
                               tags$i(
-                                class = "fa-solid fa-square",
-                                style = "color:#ffeeaa"
+                                class = "fa-solid fa-square increase"
                               ),
                               "Increase"
                             ))),
@@ -679,8 +527,7 @@ app_ui <- function(request) {
                           bsplus::bs_embed_tooltip(
                             tag = h5(span(shiny::tagList(
                               tags$i(
-                                class = "fa-solid fa-square",
-                                style = "color:#A9A9A9"
+                                class = "fa-solid fa-square missing"
                               ),
                               "Missing"
                             ))),
@@ -739,10 +586,10 @@ app_ui <- function(request) {
                           paste(
                             "<i class='fa fa-file-upload'></i>&emsp;",
                             tags$span(
-                              style = "font-size:150%",
+                              class = "larger-font",
                               "Upload your",
                               tags$span(
-                                style = "color:#f78300",
+                                class = "color-orange",
                                 "laboratory data"
                               ),
                               " by using the 'Data Upload'-tab in the task bar on the left.
@@ -758,7 +605,7 @@ app_ui <- function(request) {
                           paste(
                             "<i class= 'fa fa-file'></i>&emsp;",
                             tags$span(
-                              style = "font-size:150%",
+                              class = "larger-font",
                               "Click the 'Data Manual'-tab for the required format and structure for laboratory data file."
                             )
                           )
@@ -769,7 +616,7 @@ app_ui <- function(request) {
                           paste(
                             "<i class='fa fa-info'></i>&emsp;",
                             tags$span(
-                              style = "font-size:150%",
+                              class = "larger-font",
                               " If you want to access information on the elaborator, click the 'Information'-tab.",
                               sep = ""
                             )
@@ -1234,33 +1081,6 @@ app_ui <- function(request) {
             The data of a study consists of three subjects and two laboratory parameters hematocrit (HCT) and hemoglobin (HGB). The user has not changed the percentage of 'tolerated' missing values, and therefore the default of 50% is used.
             The original data is summarized below. <br> <br>
 
-
-            <style>
-            table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
-            width: 100%;
-            }
-
-            td, th {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-            }
-
-            tr:nth-child(2) {
-            background-color: #dff2fd;
-            }
-
-            tr:nth-child{
-            background-color: #c9e1f6;
-            }
-
-            tr:first-child{
-            background-color: #11c4d4;
-            }
-            </style>
-
             <table>
 
             <tr>
@@ -1280,16 +1100,16 @@ app_ui <- function(request) {
             <tr>
             <th> 1 </th>
             <th> 42.8 </th>
-            <th> <font color='#f78300'> NA </font>  </th>
-            <th> <font color='#f78300'> NA </font>  </th>
+            <th class = 'color-orange'> NA </th>
+            <th class = 'color-orange'> NA </th>
             <th>  13.8</th>
             <th>  13.8</th>
-            <th> 14.1 </th>
+            <th>  14.1</th>
             </tr>
             <tr>
             <th>2</th>
             <th> 41.2 </th>
-            <th>  <font color='#f78300'> NA </font> </th>
+            <th class = 'color-orange'> NA </th>
             <th>  42.2</th>
             <th>  16.2</th>
             <th>  15.8</th>
@@ -1297,10 +1117,10 @@ app_ui <- function(request) {
             </tr>
             <tr>
             <th>3</th>
-            <th> <font color='#f78300'> NA </font> </th>
+            <th class = 'color-orange'> NA </th>
             <th> 40.9 </th>
             <th>  40.7</th>
-            <th>  <font color='#f78300'> NA </font> </th>
+            <th class = 'color-orange'> NA </th>
             <th>  14.3</th>
             <th>  13.3</th>
             </tr>
@@ -1348,9 +1168,12 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-file-upload'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Upload your",
-                          tags$span(style = "color:#f78300", "laboratory data"),
+                          tags$span(
+                            class = "color-orange",
+                            "laboratory data"
+                          ),
                           " by using the 'Data Upload'-tab in the task bar on the left.
                     Select the file format and click
                     the 'Browse...'-button.",
@@ -1364,7 +1187,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class= 'fa fa-file'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Click the 'Data Manual'-tab for the required format and structure for laboratory data file."
                         )
                       )
@@ -1375,7 +1198,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-info'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           " If you want to access information on the elaborator, click the 'Information'-tab.",
                           sep = ""
                         )
@@ -1484,9 +1307,8 @@ app_ui <- function(request) {
                         width = 2,
                         offset = 4,
                         shiny::helpText(
-                          HTML(
-                            '<p style="color:white"> You can minimize/maximize this window with the -/+ button on the top right of the panel </p>'
-                          )
+                          class = "color-white",
+                          "You can minimize/maximize this window with the -/+ button on the top right of the panel"
                         )
                       )
                     )
@@ -1561,9 +1383,9 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-file-upload'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Upload your",
-                          tags$span(style = "color:#f78300", "laboratory data"),
+                          tags$span(class = "color-orange", "laboratory data"),
                           " by using the 'Data Upload'-tab in the task bar on the left.
                     Select the file format and click
                     the 'Browse...'-button.",
@@ -1577,7 +1399,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class= 'fa fa-file'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Click the 'Data Manual'-tab for the required format and structure for laboratory data file."
                         )
                       )
@@ -1588,7 +1410,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-info'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           " If you want to access information on the elaborator, click the 'Information'-tab.",
                           sep = ""
                         )
@@ -1603,9 +1425,6 @@ app_ui <- function(request) {
                   shiny::fluidRow(
                     shiny::column(
                       4,
-                      tags$head(tags$style(HTML(
-                        '#insertBtn{background-color:#47d2bc;border-color: #000000;}'
-                      ))),
                       shiny::actionButton(
                         inputId = "insertBtn",
                         label = "Add",
@@ -1614,9 +1433,6 @@ app_ui <- function(request) {
                     ),
                     shiny::column(
                       4,
-                      tags$head(tags$style(HTML(
-                        '#removeBtn{background-color:#ffeeaa;border-color: #000000;}'
-                      ))),
                       shiny::actionButton(
                         inputId = "removeBtn",
                         label = "Delete",
@@ -1629,7 +1445,7 @@ app_ui <- function(request) {
                     inputId = "apply",
                     label = "Apply Filter Selection!",
                     icon = icon("redo"),
-                    style = "color: #fff; background-color: #f78300; border-color: #fff"
+                    class = "redo-button"
                   )
                 )
               )
@@ -1655,9 +1471,9 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-file-upload'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Upload your",
-                          tags$span(style = "color:#f78300", "laboratory data"),
+                          tags$span(class = "color-orange", "laboratory data"),
                           " by using the 'Data Upload'-tab in the task bar on the left.
                     Select the file format and click
                     the 'Browse...'-button.",
@@ -1671,7 +1487,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class= 'fa fa-file'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Click the 'Data Manual'-tab for the required format and structure for laboratory data file."
                         )
                       )
@@ -1682,7 +1498,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-info'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           " If you want to access information on the elaborator, click the 'Information'-tab.",
                           sep = ""
                         )
@@ -1721,9 +1537,9 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-file-upload'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Upload your",
-                          tags$span(style = "color:#f78300", "laboratory data"),
+                          tags$span(class = "color-orange", "laboratory data"),
                           " by using the 'Data Upload'-tab in the task bar on the left.
                     Select the file format and click
                     the 'Browse...'-button.",
@@ -1737,7 +1553,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class= 'fa fa-file'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           "Click the 'Data Manual'-tab for the required format and structure for laboratory data file."
                         )
                       )
@@ -1748,7 +1564,7 @@ app_ui <- function(request) {
                       paste(
                         "<i class='fa fa-info'></i>&emsp;",
                         tags$span(
-                          style = "font-size:150%",
+                          class = "larger-font",
                           " If you want to access information on the elaborator, click the 'Information'-tab.",
                           sep = ""
                         )
@@ -1836,9 +1652,10 @@ app_ui <- function(request) {
                     shiny::column(
                       width = 2,
                       offset = 4,
-                      shiny::helpText(HTML(
-                        '<p style="color:white"> You can minimize/maximize this window with the -/+ button on the top right of the panel </p>'
-                      ))
+                      shiny::helpText(
+                        class = "color-white",
+                        "You can minimize/maximize this window with the -/+ button on the top right of the panel"
+                      )
                     )
                   ),
                   shiny::conditionalPanel(
@@ -1889,9 +1706,8 @@ app_ui <- function(request) {
                       ),
                       shiny::conditionalPanel(
                         condition = "input.abnormal_values_factor < 0 || input.abnormal_values_factor == undefined",
-                        HTML(
-                          '<p style="color: #f78300"> Please enter a non-negativ numeric percentage value.'
-                        )
+                        class = "color-orange",
+                        "Please enter a non-negative numeric percentage value."
                       ),
                       shiny::uiOutput('tab3', width = 'auto'),
                       shiny::uiOutput('hoverpanel3')
@@ -1904,27 +1720,13 @@ app_ui <- function(request) {
           tags$script(
             HTML("$('body').addClass('sidebar-mini');")
           ),
-          tags$head(
-            tags$style(
-              HTML(
-                " h1 {font-family: 'Arial';line-height: 1.1;color: #fffff;}"
-              )
-            )
-          ),
+
           tags$script(
             HTML(
               '$(document).ready(function() {
-        $("header").find("nav").append(\' <h4 style="color:white"> A New Perspective on Laboratory Data </h4>\');
+        $("header").find("nav").append(\' <h4> A New Perspective on Laboratory Data </h4>\');
         })'
             )
-          ),
-          tags$style(
-            type = 'text/css',
-            ".selectize-dropdown-content {max-height: 50px;}"
-          ),
-          tags$style(
-            type = 'text/css',
-            ".selectize-input { background-color: #F8F8F8;}"
           )
         )
       )
