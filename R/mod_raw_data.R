@@ -8,7 +8,11 @@
 #'
 mod_raw_data_ui <- function(id) {
   ns <- shiny::NS(id)
-  shiny::tagList()
+  shiny::tagList(
+    DT::DTOutput(
+      'raw_data_table'
+    )
+  )
 }
 
 #' raw_data Server Functions

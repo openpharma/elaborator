@@ -28,6 +28,8 @@ golem::add_module(name = "raw_data", with_test = TRUE)
 golem::add_module(name = "data_manual", with_test = TRUE)
 golem::add_module(name = "info", with_test = TRUE)
 golem::add_module(name = "filter", with_test = TRUE)
+golem::add_module(name = "options", with_test = TRUE)
+golem::add_module(name = "welcome", with_test = TRUE)
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

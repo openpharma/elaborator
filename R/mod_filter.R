@@ -8,7 +8,35 @@
 #'
 mod_filter_ui <- function(id) {
   ns <- shiny::NS(id)
-  shiny::tagList()
+  shiny::tagList(
+    shiny::uiOutput("filter_percentage"),
+    shiny::uiOutput("pickerinput_filter"),
+    shiny::fluidRow(
+      shiny::column(
+        4,
+        shiny::actionButton(
+          inputId = "insertBtn",
+          label = "Add",
+          icon = icon("plus")
+        )
+      ),
+      shiny::column(
+        4,
+        shiny::actionButton(
+          inputId = "removeBtn",
+          label = "Delete",
+          icon = icon("minus")
+        )
+      )
+    ),
+    shiny::tags$div(id = "placeholder"),
+    shiny::actionButton(
+      inputId = "apply",
+      label = "Apply Filter Selection!",
+      icon = icon("redo"),
+      class = "redo-button"
+    )
+  )
 }
 
 #' filter Server Functions
