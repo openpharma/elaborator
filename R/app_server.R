@@ -19,7 +19,7 @@ app_server <- function(input, output, session) {
   r$statistical_test_results <- shiny::reactiveValues(var = NULL)
   r$values <- shiny::reactiveValues(default = 0)
 
-  r$globals <- shiny::reactiveValues(
+  globals_init <- list(
     clusterMethod = "OLO_average",
     go = 0L,
     go3 = 0L,
@@ -36,8 +36,9 @@ app_server <- function(input, output, session) {
     percent = 0
   )
   for (i in seq_len(20L)) {
-    r$globals[[paste0("id", i, "-col")]] <- NULL
+    globals_init[[paste0("id", i, "-col")]] <- NULL
   }
+  r$globals <- do.call(shiny::reactiveValues, globals_init)
 
   ns_qual <- shiny::NS("qualitative_1")
 
