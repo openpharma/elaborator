@@ -1,8 +1,14 @@
 testServer(
   mod_options_server,
-  # Add here your module params
-  args = list()
-  , {
+  args = list(
+    id = "options",
+    r = shiny::reactiveValues(
+      data_param = list(ntreat = 1L, nvisit = 1L, nlab = 1L, nlab2 = 1L),
+      start_ai = shiny::reactiveValues(dat = FALSE),
+      globals = shiny::reactiveValues()
+    )
+  ),
+  {
     ns <- session$ns
     expect_true(
       inherits(ns, "function")

@@ -1,8 +1,12 @@
 testServer(
   mod_filter_server,
-  # Add here your module params
-  args = list()
-  , {
+  args = list(
+    id = "filter",
+    r = shiny::reactiveValues(
+      raw_data_and_warnings = list(data = NULL, message = NULL)
+    )
+  ),
+  {
     ns <- session$ns
     expect_true(
       inherits(ns, "function")

@@ -139,9 +139,79 @@ mod_options_ui <- function(id) {
 #' options Server Functions
 #'
 #' @noRd
-mod_options_server <- function(id) {
+mod_options_server <- function(id, r) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    shiny::observe({
+      input$'id1-col'
+      input$'id2-col'
+      input$'id3-col'
+      input$'id4-col'
+      input$'id5-col'
+      input$'id6-col'
+      input$'id7-col'
+      input$'id8-col'
+      input$'id9-col'
+      input$'id10-col'
+      input$'id11-col'
+      input$'id12-col'
+      input$'id13-col'
+      input$'id14-col'
+      input$'id15-col'
+      input$'id16-col'
+      input$'id17-col'
+      input$'id18-col'
+      input$'id19-col'
+      input$'id20-col'
+      shiny::req(r$data_param)
+      purrr::map(
+        paste0("id", 1:r$data_param$nvisit),
+        ~ shiny::callModule(
+          boxPlotColor,
+          id = .x,
+          c("Color1", "Color2", "Color3", "Color4"),
+          paste0(
+            "Select Color for '",
+            r$globals$select.visit[as.numeric(substr(.x, 3, nchar(.x)))],
+            "'"
+          ),
+          start_color = ifelse(
+            is.null(input[[paste0(
+              "id",
+              as.numeric(substr(.x, 3, nchar(.x))),
+              "-col"
+            )]]),
+            paste0("Color", 2),
+            input[[paste0("id", as.numeric(substr(.x, 3, nchar(.x))), "-col")]]
+          ),
+          number = as.numeric(substr(.x, 3, nchar(.x)))
+        )
+      )
+      for (i in seq_len(20L)) {
+        cid <- paste0("id", i, "-col")
+        r$globals[[cid]] <- input[[cid]]
+      }
+    })
+
+    shiny::observeEvent(input$go3, {
+      if (shiny::isolate(input$orderinglab) == "auto") {
+        if (!is.null(shiny::isolate(input$clusterMethod))) {
+          if (
+            (startsWith(shiny::isolate(input$clusterMethod), "OLO") |
+              startsWith(shiny::isolate(input$clusterMethod), "GW"))
+          ) {
+            r$start_ai$dat <- TRUE
+          } else {
+            r$start_ai$dat <- FALSE
+          }
+        } else {
+          r$start_ai$dat <- FALSE
+        }
+      } else {
+        r$start_ai$dat <- FALSE
+      }
+    })
   })
 }
 
@@ -149,4 +219,4 @@ mod_options_server <- function(id) {
 # mod_options_ui("options_1")
 
 ## To be copied in the server
-# mod_options_server("options_1")
+# mod_options_server("options_1", r = r)

@@ -48,7 +48,7 @@ mod_data_manual_ui <- function(id) {
             <li> Missing laboratory values must be coded as NA . We recommend carefully reading the section
             on <i>Handling Missing Data</i> in the &nbsp; <i class='fa fa-info'></i> "
       ),
-      shiny::actionLink("link_to_tab_info", "Information"),
+      shiny::actionLink(ns("link_to_tab_info"), "Information"),
       HTML(
         "-tab for correct interpretation. The section describes in detail how the e<b>lab</b>orator deals with missing data. </li>
             <li> If a laboratory parameter has no lower  or upper limit of normal, please do not insert any character in the respective cell but leave the cell empty or use the NA coding. Please do not use blank/space. </li>
@@ -63,17 +63,15 @@ mod_data_manual_ui <- function(id) {
   )
 }
 
-#' data_manual Server Functions
-#'
-#' @noRd
-mod_data_manual_server <- function(id) {
-  moduleServer(id, function(input, output, session) {
+mod_data_manual_server <- function(id, r) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    rs <- session$userData$root
+    if (is.null(rs)) {
+      rs <- session
+    }
+    shiny::observeEvent(input$link_to_tab_info, {
+      shinydashboard::updateTabItems(rs, "sidebarmenu", "helptext")
+    })
   })
 }
-
-## To be copied in the UI
-# mod_data_manual_ui("data_manual_1")
-
-## To be copied in the server
-# mod_data_manual_server("data_manual_1")

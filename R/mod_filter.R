@@ -9,13 +9,13 @@
 mod_filter_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::uiOutput("filter_percentage"),
-    shiny::uiOutput("pickerinput_filter"),
+    shiny::uiOutput(ns("filter_percentage")),
+    shiny::uiOutput(ns("pickerinput_filter")),
     shiny::fluidRow(
       shiny::column(
         4,
         shiny::actionButton(
-          inputId = "insertBtn",
+          inputId = ns("insertBtn"),
           label = "Add",
           icon = icon("plus")
         )
@@ -23,15 +23,15 @@ mod_filter_ui <- function(id) {
       shiny::column(
         4,
         shiny::actionButton(
-          inputId = "removeBtn",
+          inputId = ns("removeBtn"),
           label = "Delete",
           icon = icon("minus")
         )
       )
     ),
-    shiny::tags$div(id = "placeholder"),
+    shiny::tags$div(id = ns("placeholder")),
     shiny::actionButton(
-      inputId = "apply",
+      inputId = ns("apply"),
       label = "Apply Filter Selection!",
       icon = icon("redo"),
       class = "redo-button"
@@ -45,6 +45,16 @@ mod_filter_ui <- function(id) {
 mod_filter_server <- function(id, r) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    rs <- session$userData$root
+    if (is.null(rs)) {
+      rs <- session
+    }
+    ns_box <- shiny::NS("boxplots_1")
+    ns_qual <- shiny::NS("qualitative_1")
+    ns_trees <- shiny::NS("trees_1")
+
+    id_elab_m <- shiny::reactiveValues(myList = list(), myList2 = list())
+
     #### 2. filter by app filter-tab  ####
     # used function:
     # ---
@@ -52,19 +62,20 @@ mod_filter_server <- function(id, r) {
     # filter data set by filter-tab selection within elaborator app.
     #
     # reactivity triggers :
-    # raw_data_and_warnings() / <filter selection within app>
-    raw_data_and_warnings <- shiny::reactive(r$raw_data_and_warnings)
+    # r$raw_data_and_warnings / <filter selection within app>
+    raw_data_and_warnings <- shiny::reactive({
+      shiny::req(r$raw_data_and_warnings)
+      r$raw_data_and_warnings
+    })
 
     filtered_raw_data <- shiny::reactive({
       shiny::req(raw_data_and_warnings()$data)
       elab_data <- raw_data_and_warnings()$data
       data <- elab_data
       if (length(id_elab_m$myList) != 0) {
-        names <- id_elab_m$myList2
-        vars <- id_elab_m$myList
         if (length(id_elab_m$myList) && !is.null(id_elab_m$myList2)) {
           data_filt <- data
-          for (i in 1:length(id_elab_m$myList)) {
+          for (i in seq_along(id_elab_m$myList)) {
             if (
               elab_data %>%
                 dplyr::pull(id_elab_m$myList2[i]) %>%
@@ -107,9 +118,9 @@ mod_filter_server <- function(id, r) {
     filtered_and_reduced_raw_data <- shiny::reactive({
       filtered_data <- elaborator_filter_by_app_selection(
         elab_data = filtered_raw_data(),
-        visits = input$select.visit,
-        treat = input$select.treatments,
-        labparameter = input$select.lab
+        visits = r$globals$select.visit,
+        treat = r$globals$select.treatments,
+        labparameter = r$globals$select.lab
       )
       filtered_data
     })
@@ -126,18 +137,17 @@ mod_filter_server <- function(id, r) {
 
     data_with_missing_flag <- shiny::reactive({
       shiny::req(filtered_and_reduced_raw_data())
-      shiny::req(input$select.toleratedPercentage)
+      shiny::req(r$globals$select.toleratedPercentage)
 
       filtered_and_removed_visits <- elaborator_remove_visits_due_tolerated_missings(
         elab_data = filtered_and_reduced_raw_data(),
-        tolerated_value = (input$select.toleratedPercentage / 100)
+        tolerated_value = (r$globals$select.toleratedPercentage / 100)
       )
       filtered_and_removed_visits
     })
 
     ####    5. remove visits due to tolerated percentage missing:####
-    # used function:
-    # ---
+    # used function: ---
     #
     # purpose: remove visits due to tolerated percentage missing
     #
@@ -146,7 +156,6 @@ mod_filter_server <- function(id, r) {
     # data_with_missing_flag()
 
     data_without_missing_visits <- shiny::reactive({
-      #remove visits
       shiny::req(data_with_missing_flag())
       filtered_and_removed_visits <- data_with_missing_flag() %>%
         dplyr::filter(visit_removed == FALSE)
@@ -163,15 +172,15 @@ mod_filter_server <- function(id, r) {
     # data_without_missing_visits() / input$select.visit / input$select.treatments / raw_data_and_warnings()
     data_filtered_by_app_selection <- shiny::reactive({
       shiny::req(
-        input$select.treatments,
-        input$select.visit,
+        r$globals$select.treatments,
+        r$globals$select.visit,
         data_without_missing_visits(),
         raw_data_and_warnings()
       )
       filtered_data2 <- elaborator_change_class_required_variables(
         elab_data = data_without_missing_visits(),
-        visit = input$select.visit,
-        treatment = input$select.treatments,
+        visit = r$globals$select.visit,
+        treatment = r$globals$select.treatments,
         lab = unique(raw_data_and_warnings()$data$LBTESTCD)
       )
       filtered_data2
@@ -186,7 +195,6 @@ mod_filter_server <- function(id, r) {
           LBTESTCD
         ) %>%
         dplyr::select(TRTP, LBTESTCD, SUBJIDN, AVISIT, LBORRES) %>%
-        ## by group? map_group?
         tidyr::pivot_wider(names_from = AVISIT, values_from = LBORRES) %>%
         dplyr::select(-SUBJIDN)
       tmp <- tmp[, c(
@@ -199,12 +207,12 @@ mod_filter_server <- function(id, r) {
 
     #### AI Sorting ####
     ####    a1. prepare distance matrix (only if ai sorting is selected) ####
-    prepare_dist_matrix_for_clustering <- shiny::eventReactive(c(input$go3), {
+    prepare_dist_matrix_for_clustering <- shiny::eventReactive(c(r$globals$go3), {
       shiny::req(data_filtered_by_app_selection())
       ds <- data_filtered_by_app_selection()
-      if (shiny::isolate(input$orderinglab) == "auto") {
-        first <- shiny::isolate(input$select.ai.first)
-        last <- shiny::isolate(input$select.ai.last)
+      if (shiny::isolate(r$globals$orderinglab) == "auto") {
+        first <- shiny::isolate(r$globals$select.ai.first)
+        last <- shiny::isolate(r$globals$select.ai.last)
         shiny::validate(
           shiny::need(
             first != last,
@@ -224,24 +232,24 @@ mod_filter_server <- function(id, r) {
     })
 
     ####    a2. use package seriation for ordering lab parameter ####
-    lab_parameter_order_by_clustering <- shiny::eventReactive(input$go3, {
+    lab_parameter_order_by_clustering <- shiny::eventReactive(r$globals$go3, {
       shiny::req(shiny::isolate(data_filtered_by_app_selection()))
       tmp2 <- shiny::isolate(prepare_dist_matrix_for_clustering())
       ds <- shiny::isolate(data_filtered_by_app_selection())
 
-      if (input$orderinglab == "asinp") {
+      if (r$globals$orderinglab == "asinp") {
         as.character(unique(ds$LBTESTCD))
-      } else if (input$orderinglab == "alphabetically") {
+      } else if (r$globals$orderinglab == "alphabetically") {
         sort(as.character(unique(ds$LBTESTCD)))
-      } else if (input$orderinglab == "auto") {
+      } else if (r$globals$orderinglab == "auto") {
         shiny::req(prepare_dist_matrix_for_clustering())
         tmp2 %>%
           elaborator_calculate_spearman_distance() %>%
-          seriation::seriate(method = input$clusterMethod) %>%
+          seriation::seriate(method = r$globals$clusterMethod) %>%
           seriation::get_order() %>%
           rownames(tmp2)[.]
-      } else if (input$orderinglab == "manual") {
-        input$arrange.lab
+      } else if (r$globals$orderinglab == "manual") {
+        r$globals$arrange.lab
       } else {
         as.character(unique(ds$LBTESTCD))
       }
@@ -257,19 +265,18 @@ mod_filter_server <- function(id, r) {
     # data_filtered_by_app_selection() / input$go3
 
     data_with_selected_factor_levels <- shiny::eventReactive(
-      c(data_filtered_by_app_selection(), input$go3),
+      c(data_filtered_by_app_selection(), r$globals$go3),
       {
         tmp <- data_filtered_by_app_selection()
-        #re-level the lab parameter vector for arrangement within app
-        if (shiny::isolate(input$orderinglab) == "asinp") {
+        if (shiny::isolate(r$globals$orderinglab) == "asinp") {
           lab_levels <- unique(raw_data_and_warnings()$data$LBTESTCD)
-          lab_levels <- lab_levels[lab_levels %in% input$select.lab]
+          lab_levels <- lab_levels[lab_levels %in% r$globals$select.lab]
           tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
-        } else if (shiny::isolate(input$orderinglab) == "alphabetically") {
+        } else if (shiny::isolate(r$globals$orderinglab) == "alphabetically") {
           lab_levels <- sort(unique(raw_data_and_warnings()$data$LBTESTCD))
-          lab_levels <- lab_levels[lab_levels %in% input$select.lab]
+          lab_levels <- lab_levels[lab_levels %in% r$globals$select.lab]
           tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
-        } else if (shiny::isolate(input$orderinglab) == "auto") {
+        } else if (shiny::isolate(r$globals$orderinglab) == "auto") {
           lab_levels <- shiny::isolate(lab_parameter_order_by_clustering())
           lab_levels <- c(
             lab_levels,
@@ -278,9 +285,9 @@ mod_filter_server <- function(id, r) {
             )])
           )
           tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
-        } else if (shiny::isolate(input$orderinglab) == "manual") {
-          lab_levels <- input$arrange.lab
-          lab_levels <- lab_levels[lab_levels %in% input$select.lab]
+        } else if (shiny::isolate(r$globals$orderinglab) == "manual") {
+          lab_levels <- r$globals$arrange.lab
+          lab_levels <- lab_levels[lab_levels %in% r$globals$select.lab]
           tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
         }
         tmp
@@ -298,7 +305,7 @@ mod_filter_server <- function(id, r) {
 
     data_with_only_non_missings_over_visits <- shiny::reactive({
       shiny::req(data_with_selected_factor_levels())
-      shiny::req(input$select.visit)
+      shiny::req(r$globals$select.visit)
       tmp <- data_with_selected_factor_levels() %>%
         dplyr::full_join(
           data_with_selected_factor_levels() %>%
@@ -332,11 +339,413 @@ mod_filter_server <- function(id, r) {
         dplyr::filter(all_complete == TRUE)
       tmp2
     })
+
+    #### Reactive: layout dimensions for plot panels (data_param) ####
+    data_param <- shiny::reactive({
+      shiny::req(data_with_selected_factor_levels())
+      ntreat <- length(unique(data_with_only_non_missings_over_visits()$TRTP))
+      nvisit <- length(unique(data_with_only_non_missings_over_visits()$AVISIT))
+      nlab <- length(unique(data_with_only_non_missings_over_visits()$LBTESTCD))
+      tmp <- data_with_only_non_missings_over_visits()
+      tmp <- subset(tmp, !(tmp$LBORNRLO == "" & tmp$LBORNRHI == ""))
+      nlab2 <- length(unique(tmp$LBTESTCD))
+
+      list(
+        ntreat = ntreat,
+        nvisit = nvisit,
+        nlab = nlab,
+        nlab2 = nlab2
+      )
+    })
+
+    #### QUALITATIVE TREND ####
+    #### Summary for qualitative trends (InQuRa / Range / refRange) ####
+    Summary_for_qualitative_trends <- shiny::reactive({
+      shiny::req(data_with_selected_factor_levels(), r$globals$percent)
+      dat1 <- data_with_selected_factor_levels()
+
+      percent <- r$globals$percent / 100
+      firstVisit <- dat1 %>%
+        dplyr::pull(AVISIT) %>%
+        levels() %>%
+        .[1]
+      Yall <- dat1 %>%
+        tidyr::spread(AVISIT, LBORRES) %>%
+        dplyr::select(
+          c(LBTESTCD, LBORNRLO, LBORNRHI, SUBJIDN, TRTP, LBTESTCD, firstVisit)
+        )
+      Summa <- Yall %>%
+        dplyr::group_by(LBTESTCD) %>%
+        dplyr::summarise(
+          lowquant = stats::quantile(
+            !!rlang::sym(firstVisit),
+            na.rm = TRUE,
+            probs = 0.25
+          ),
+          highquant = stats::quantile(
+            !!rlang::sym(firstVisit),
+            na.rm = TRUE,
+            probs = 0.75
+          ),
+          max = max(!!rlang::sym(firstVisit), na.rm = TRUE),
+          min = min(!!rlang::sym(firstVisit), na.rm = TRUE),
+          highref = mean(as.numeric(LBORNRHI), na.rm = TRUE),
+          lowref = mean(as.numeric(LBORNRLO), na.rm = TRUE)
+        ) %>%
+        dplyr::mutate(
+          InQuRa = percent * (highquant - lowquant),
+          Range = percent * (max - min),
+          refRange = percent * (highref - lowref)
+        ) %>%
+        dplyr::select(LBTESTCD, InQuRa, Range, refRange) %>%
+        dplyr::rename(variable = LBTESTCD)
+      Summa
+    })
+
+    #### Visit choices for treatment comparison (trtcompar_val) ####
+    trtcompar_val <- shiny::reactive({
+      shiny::req(data_with_selected_factor_levels())
+      as.character(unique(data_with_selected_factor_levels()$AVISIT))
+    })
+
+    inserted_elab <- shiny::reactiveVal(character())
+
+    #### FILTER ####
+    # Reset initial values and remove dynamic filter UI when Remove is clicked;
+    # build filter percentage, picker, and insert-variable UI.
+
+    shiny::observeEvent(input$removeBtn, {
+      id_elab_m$myList <- list()
+      id_elab_m$myList2 <- list()
+      for (i in seq_along(inserted_elab())) {
+        shiny::removeUI(selector = paste0("#", inserted_elab()[i]))
+      }
+      inserted_elab(character())
+    })
+
+    output$filter_percentage <- shiny::renderUI({
+      total_tmp <- dim(raw_data_and_warnings()$data)[1]
+      value_tmp <- dim(filtered_raw_data())[1]
+      shinyWidgets::progressBar(
+        id = ns("filter_percentage"),
+        value = value_tmp,
+        total = total_tmp,
+        title = "",
+        display_pct = TRUE
+      )
+    })
+
+    output$pickerinput_filter <- shiny::renderUI({
+      shiny::req(raw_data_and_warnings())
+
+      dat <- raw_data_and_warnings()$data
+
+      data_variables_tmp <- purrr::map(
+        dat,
+        function(x) attr(x, "label", exact = TRUE)
+      )
+      data_variables <- names(data_variables_tmp)
+      names(data_variables) <- paste0(
+        names(data_variables_tmp),
+        ifelse(
+          as.character(data_variables_tmp) == "NULL",
+          "",
+          paste0(" - ", as.character(data_variables_tmp))
+        )
+      )
+
+      choices <- data_variables
+
+      shinyWidgets::pickerInput(
+        inputId = ns("pickerinput_filter"),
+        label = 'Select filter variable(s) for elaborator data set',
+        choices = choices,
+        selected = NULL,
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE,
+          `selected-text-format` = 'count > 0',
+          `count-selected-text` = '{0} selected (of {1})',
+          `live-search` = TRUE,
+          `header` = 'Select multiple items',
+          `none-selected-text` = 'No selection!'
+        )
+      )
+    })
+
+    shiny::observeEvent(c(input$insertBtn), {
+      shiny::req(raw_data_and_warnings()$data)
+
+      elab_data <- raw_data_and_warnings()$data
+
+      if (length(inserted_elab()) > 0) {
+        for (i in seq_along(inserted_elab())) {
+          shiny::removeUI(selector = paste0('#', inserted_elab()[i]))
+        }
+      }
+
+      btn <- input$insertBtn
+      pickerinput_filter <- input$pickerinput_filter
+
+      id_elab_nr <- character()
+      id_elab_nr2 <- character()
+      new_inserted <- character()
+
+      if (length(pickerinput_filter) > 0) {
+        for (i in seq_along(pickerinput_filter)) {
+          id <- paste0(pickerinput_filter[i], btn)
+          shiny::insertUI(
+            selector = paste0("#", ns("placeholder")),
+            ui = shiny::tags$div(
+              if (
+                !is.numeric(
+                  elab_data %>%
+                    dplyr::pull(pickerinput_filter[i])
+                )
+              ) {
+                shinyWidgets::pickerInput(
+                  inputId = id,
+                  label = paste0(pickerinput_filter[i]),
+                  choices = elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    unique(),
+                  selected = elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    unique(),
+                  multiple = TRUE,
+                  options = list(
+                    `actions-box` = TRUE,
+                    `selected-text-format` = 'count > 0',
+                    `count-selected-text` = '{0} selected (of {1})',
+                    `live-search` = TRUE,
+                    `header` = 'Select multiple items',
+                    `none-selected-text` = 'All dropped!'
+                  )
+                )
+              } else if (
+                is.numeric(
+                  elab_data %>%
+                    dplyr::pull(pickerinput_filter[i])
+                ) &&
+                  !is.integer(
+                    elab_data %>%
+                      dplyr::pull(pickerinput_filter[i])
+                  )
+              ) {
+                shiny::sliderInput(
+                  inputId = id,
+                  label = paste0(pickerinput_filter[i]),
+                  value = c(
+                    elab_data %>%
+                      dplyr::pull(pickerinput_filter[i]) %>%
+                      base::min(na.rm = TRUE),
+                    elab_data %>%
+                      dplyr::pull(pickerinput_filter[i]) %>%
+                      base::max(na.rm = TRUE)
+                  ),
+                  min = elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    base::min(na.rm = TRUE),
+                  max = elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    base::max(na.rm = TRUE)
+                )
+              } else if (
+                is.numeric(
+                  elab_data %>%
+                    dplyr::pull(pickerinput_filter[i])
+                ) &&
+                  is.integer(
+                    elab_data %>%
+                      dplyr::pull(pickerinput_filter[i])
+                  )
+              ) {
+                shiny::sliderInput(
+                  inputId = id,
+                  label = paste0(pickerinput_filter[i]),
+                  value = c(
+                    elab_data %>%
+                      dplyr::pull(pickerinput_filter[i]) %>%
+                      base::min(na.rm = TRUE),
+                    elab_data %>%
+                      dplyr::pull(pickerinput_filter[i]) %>%
+                      base::max(na.rm = TRUE)
+                  ),
+                  min = elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    base::min(na.rm = TRUE),
+                  max = elab_data %>%
+                    dplyr::pull(pickerinput_filter[i]) %>%
+                    base::max(na.rm = TRUE),
+                  step = 1,
+                  sep = "",
+                  ticks = FALSE
+                )
+              },
+              id = id
+            )
+          )
+          new_inserted <- c(id, new_inserted)
+          id_elab_nr2 <- c(id_elab_nr2, pickerinput_filter[[i]])
+          id_elab_nr <- c(id_elab_nr, id)
+        }
+      }
+
+      id_elab_m$myList2 <- id_elab_nr2
+      id_elab_m$myList <- id_elab_nr
+      inserted_elab(new_inserted      )
+    })
+
+    #### Picker/Selectize Inputs ####
+
+    ### bug fix filter update
+
+    shiny::observeEvent(filtered_raw_data(), {
+      choices_sel_lab <- unique(filtered_raw_data()$LBTESTCD)
+      shinyWidgets::updatePickerInput(
+        rs,
+        inputId = "select.lab",
+        choices = choices_sel_lab,
+        selected = choices_sel_lab
+      )
+
+      choices_sel_visit <- unique(filtered_raw_data()$AVISIT)
+
+      shiny::updateSelectizeInput(
+        rs,
+        inputId = "select.visit",
+        choices = choices_sel_visit,
+        selected = choices_sel_visit
+      )
+
+      shiny::updateSelectizeInput(
+        rs,
+        inputId = "arrange.lab",
+        choices = choices_sel_lab,
+        selected = choices_sel_lab
+      )
+
+      choices_sel_treatments <- unique(filtered_raw_data()$TRTP)
+
+      shiny::updateSelectizeInput(
+        rs,
+        inputId = "select.treatments",
+        choices = choices_sel_treatments,
+        selected = choices_sel_treatments
+      )
+    })
+
+    shiny::observeEvent(r$globals$select.lab, {
+      if (length(r$globals$select.lab) <= length(r$globals$arrange.lab)) {
+        tmp <- r$globals$arrange.lab[r$globals$arrange.lab %in% r$globals$select.lab]
+      } else {
+        tmp <- c(
+          r$globals$arrange.lab,
+          r$globals$select.lab[!r$globals$select.lab %in% r$globals$arrange.lab]
+        )
+      }
+      shiny::updateSelectizeInput(
+        rs,
+        inputId = "arrange.lab",
+        choices = tmp,
+        selected = tmp
+      )
+    })
+
+    shiny::observeEvent(r$globals$select.visit, {
+      choices <- r$globals$select.visit
+      shiny::req(choices)
+      selected <- c(choices[1], choices[length(choices)])
+      shiny::updateCheckboxGroupInput(
+        rs,
+        inputId = ns_box("trtcompar"),
+        choices = choices,
+        selected = selected
+      )
+      shinyWidgets::updatePickerInput(
+        rs,
+        inputId = "select.ai.first",
+        choices = choices,
+        selected = choices[1]
+      )
+      shinyWidgets::updatePickerInput(
+        rs,
+        inputId = "select.ai.last",
+        choices = choices,
+        selected = choices[length(choices)]
+      )
+    })
+
+    #### Update Actionbuttons ####
+
+    shiny::observeEvent(data_param(), {
+      shiny::updateActionButton(
+        rs,
+        inputId = ns_qual("apply_qual_plot"),
+        label = paste0(
+          'Create/Update ',
+          data_param()$nlab * data_param()$ntreat,
+          ' graphs'
+        )
+      )
+      shiny::updateActionButton(
+        rs,
+        inputId = ns_box("apply_quant_plot"),
+        label = paste0(
+          'Create/Update ',
+          data_param()$nlab * data_param()$ntreat,
+          ' graphs'
+        )
+      )
+      shiny::updateActionButton(
+        rs,
+        inputId = ns_trees("apply_ref_plot"),
+        label = paste0(
+          'Create/Update ',
+          data_param()$nlab2 * data_param()$ntreat,
+          ' graphs'
+        )
+      )
+    })
+
+    shiny::observe({
+      r$filtered_raw_data <- filtered_raw_data()
+    })
+    shiny::observe({
+      r$filtered_and_reduced_raw_data <- filtered_and_reduced_raw_data()
+    })
+    shiny::observe({
+      r$data_with_missing_flag <- data_with_missing_flag()
+    })
+    shiny::observe({
+      r$data_without_missing_visits <- data_without_missing_visits()
+    })
+    shiny::observe({
+      r$data_filtered_by_app_selection <- data_filtered_by_app_selection()
+    })
+    shiny::observe({
+      r$prepare_dist_matrix_for_clustering <- prepare_dist_matrix_for_clustering()
+    })
+    shiny::observe({
+      r$lab_parameter_order_by_clustering <- lab_parameter_order_by_clustering()
+    })
+    shiny::observe({
+      r$data_with_selected_factor_levels <- data_with_selected_factor_levels()
+    })
+    shiny::observe({
+      r$data_with_only_non_missings_over_visits <- data_with_only_non_missings_over_visits()
+    })
+    shiny::observe({
+      r$quant_plot_data_lines <- quant_plot_data_lines()
+    })
+    shiny::observe({
+      r$data_param <- data_param()
+    })
+    shiny::observe({
+      r$Summary_for_qualitative_trends <- Summary_for_qualitative_trends()
+    })
+    shiny::observe({
+      r$trtcompar_val <- trtcompar_val()
+    })
   })
 }
-
-## To be copied in the UI
-# mod_filter_ui("filter_1")
-
-## To be copied in the server
-# mod_filter_server("filter_1")

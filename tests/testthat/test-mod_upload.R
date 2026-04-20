@@ -1,8 +1,15 @@
 testServer(
   mod_upload_server,
-  # Add here your module params
-  args = list()
-  , {
+  args = list(
+    id = "upload",
+    r = shiny::reactiveValues(
+      start = shiny::reactiveValues(dat = FALSE),
+      app_input = shiny::reactive({
+        NULL
+      })
+    )
+  ),
+  {
     ns <- session$ns
     expect_true(
       inherits(ns, "function")

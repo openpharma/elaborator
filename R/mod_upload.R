@@ -145,8 +145,8 @@ mod_upload_server <- function(id, r) {
       }
     })
 
-    shiny::observeEvent(app_input(), {
-      if (!is.null(app_input())) {
+    shiny::observeEvent(r$app_input(), {
+      if (!is.null(r$app_input())) {
         shinyWidgets::updatePrettyRadioButtons(
           session,
           inputId = 'impswitch',
@@ -190,7 +190,7 @@ mod_upload_server <- function(id, r) {
         data_switch = input$impswitch,
         rdata_file_path = input$file$datapath,
         csv_file_path = input$csv_file$datapath,
-        loaded_file = app_input(),
+        loaded_file = r$app_input(),
         separator = input$sep,
         quote = input$quote,
         decimal = input$dec
@@ -256,8 +256,25 @@ mod_upload_server <- function(id, r) {
       }
     })
 
-    # Pass objects
-    shiny::observe(r$raw_data_and_warnings <- raw_data_and_warnings())
+    shiny::observe({
+      rv <- raw_data_and_warnings()
+      r$raw_data_and_warnings <- rv
+      if (!is.null(rv$data)) {
+        r$start$dat <- TRUE
+      }
+    })
+
+    shiny::observe({
+      if (file.exists(here::here("data", "elaborator_demo.RData"))) {
+        shinyWidgets::updatePrettyRadioButtons(
+          session,
+          inputId = "impswitch",
+          label = "Select file format",
+          choices = c("*.RData file", "*.CSV file", "Demo data"),
+          prettyOptions = list(status = "warning")
+        )
+      }
+    })
   })
 }
 

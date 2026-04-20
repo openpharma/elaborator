@@ -222,7 +222,7 @@ mod_info_ui <- function(id) {
         <h4><i class='fa fa-file-upload'></i><b>&nbsp; Data Upload</b></h4>
         The data structure and format required for upload is outlined in the &nbsp; <i class='fa fa-file'></i>"
       ),
-      shiny::actionLink("link_to_structure_info", "Data Manual"),
+      shiny::actionLink(ns("link_to_structure_info"), "Data Manual"),
       HTML(
         "-tab. You can inspect the data uploaded to the e<b>lab</b>orator via the &nbsp; <i class='fa fa-file-lines'></i> <b> Raw Data</b>-tab.
         Searching for specific data points is possible within this tab using filters and sorting options in the header of the table. <br>
@@ -282,10 +282,10 @@ mod_info_ui <- function(id) {
         The default method is hierarchical clustering combined with optimal leaf ordering.
         More information on the methodology can be found in this "
       ),
-      shiny::actionLink("link_to_pdf_view", "short manual"),
+      shiny::actionLink(ns("link_to_pdf_view"), "short manual"),
       "."
     ),
-    shiny::uiOutput('pdfview'),
+    shiny::uiOutput(ns("pdfview")),
     list(
       HTML(
         "For methods that are based on hierarchical clustering, a dendrogram is also shown above the results window.
@@ -397,17 +397,23 @@ mod_info_ui <- function(id) {
   )
 }
 
-#' info Server Functions
-#'
-#' @noRd
-mod_info_server <- function(id) {
-  moduleServer(id, function(input, output, session) {
+mod_info_server <- function(id, r) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    rs <- session$userData$root
+    if (is.null(rs)) {
+      rs <- session
+    }
+    shiny::observeEvent(input$link_to_pdf_view, {
+      output$pdfview <- shiny::renderUI({
+        shiny::tags$iframe(
+          style = "height:500px; width:100%",
+          src = "www/Seriation_methods_20191115.pdf"
+        )
+      })
+    })
+    shiny::observeEvent(input$link_to_structure_info, {
+      shinydashboard::updateTabItems(rs, "sidebarmenu", "datamanual")
+    })
   })
 }
-
-## To be copied in the UI
-# mod_info_ui("info_1")
-
-## To be copied in the server
-# mod_info_server("info_1")
