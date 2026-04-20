@@ -22,6 +22,33 @@ elaborator_load_and_check <- function(
   quote = NULL,
   decimal = NULL
 ) {
+  # Shiny can pass NA / length-0 before inputs exist; comparisons must never be NA for if()
+  shiny_path <- function(x) {
+    if (is.null(x)) {
+      return(NULL)
+    }
+    if (length(x) == 0L) {
+      return(NULL)
+    }
+    x <- x[[1L]]
+    if (is.na(x) || (is.character(x) && !nzchar(x))) {
+      return(NULL)
+    }
+    x
+  }
+  rdata_file_path <- shiny_path(rdata_file_path)
+  csv_file_path <- shiny_path(csv_file_path)
+  loaded_file <- shiny_path(loaded_file)
+
+  if (missing(data_switch) || is.null(data_switch) || length(data_switch) == 0L) {
+    data_switch <- "*.RData file"
+  } else {
+    data_switch <- as.character(data_switch[[1L]])
+    if (length(data_switch) != 1L || is.na(data_switch)) {
+      data_switch <- "*.RData file"
+    }
+  }
+
   # need a non-empty data path
     if (!is.null(rdata_file_path) || !is.null(csv_file_path) || !is.null(loaded_file) || data_switch == "Demo data") {
       required_elaborator_vars <- c("SUBJIDN", "AVISIT", "TRTP", "LBTESTCD", "LBORRES", "LBORNRLO", "LBORNRHI")
