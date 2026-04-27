@@ -41,6 +41,7 @@ app_server <- function(input, output, session) {
   r$globals <- do.call(shiny::reactiveValues, globals_init)
 
   ns_qual <- shiny::NS("qualitative_1")
+  ns_upload <- shiny::NS("upload_1")
 
   shiny::observe({
     r$globals$clusterMethod <- input$clusterMethod
@@ -48,10 +49,11 @@ app_server <- function(input, output, session) {
     r$globals$go3 <- input$go3
     r$globals$zoompx <- input$zoompx
     r$globals$panelheight <- input$panelheight
-    r$globals$select.visit <- input$select.visit
-    r$globals$select.treatments <- input$select.treatments
-    r$globals$select.lab <- input$select.lab
-    r$globals$select.toleratedPercentage <- input$select.toleratedPercentage
+    r$globals$select.visit <- input[[ns_upload("select.visit")]]
+    r$globals$select.treatments <- input[[ns_upload("select.treatments")]]
+    r$globals$select.lab <- input[[ns_upload("select.lab")]]
+    r$globals$select.toleratedPercentage <-
+      input[[ns_upload("select.toleratedPercentage")]]
     r$globals$arrange.lab <- input$arrange.lab
     r$globals$orderinglab <- input$orderinglab
     r$globals$select.ai.first <- input$select.ai.first

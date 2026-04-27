@@ -11,7 +11,7 @@ app_ui <- function(request) {
         title = "elaborator",
         shinydashboard::dashboardHeader(
           title = shiny::img(
-            src = 'www/BAY_eLaborator_Logo-lang_Negativ.svg',
+            src = 'BAY_eLaborator_Logo-lang_Negativ.svg',
             height = 24,
             align = "left"
           ),
@@ -43,6 +43,17 @@ app_ui <- function(request) {
               startExpanded = FALSE,
               mod_options_ui("options_1")
             ),
+            # shinydashboard::menuItem(
+            #   text = 'Graphic Options',
+            #   tabName = 'options',
+            #   icon = icon('cogs')
+            # ),
+            # shinydashboard::menuItem(
+            #   text = 'Data Upload',
+            #   tabName = 'datimport',
+            #   icon = icon('file-upload'),
+            #   selected = TRUE
+            # ),
             shinydashboard::menuItem(
               text = 'Data Upload',
               tabName = 'datimport',
@@ -85,6 +96,14 @@ app_ui <- function(request) {
               tabName = "quant",
               mod_boxplots_ui("boxplots_1")
             ),
+            # shinydashboard::tabItem(
+            #   tabName = "datimport",
+            #   mod_upload_ui("upload_1")
+            # ),
+            # shinydashboard::tabItem(
+            #   tabName = "options",
+            #   mod_options_ui("options_1")
+            # ),
             shinydashboard::tabItem(
               tabName = "datamanual",
               mod_data_manual_ui("data_manual_1")

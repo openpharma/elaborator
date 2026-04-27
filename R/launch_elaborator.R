@@ -69,6 +69,7 @@
 #' @importFrom grDevices adjustcolor rgb
 #' @importFrom graphics abline arrows axis boxplot grconvertX grconvertY lines mtext par plot points rect text
 #' @importFrom stats as.dendrogram as.dist binom.test cor median na.omit quantile runif t.test
+#' @importFrom utils getFromNamespace
 #'
 #' @return A shiny app
 
@@ -77,15 +78,16 @@ launch_elaborator <- function(
     host = "0.0.0.0",
     port = NULL,
     browser = NULL
-  ){
+){
 
   apppars <- list(
     elaborator_data = elaborator_data
   )
-  server_env <- environment(elaborator_server)
-  # server_env$apppars <- apppars
 
-  elaborator_app <- shiny::shinyApp(ui = elaborator_ui, server = elaborator_server)
+  elaborator_app <- shiny::shinyApp(
+    ui = getFromNamespace("elaborator_ui", "elaborator"),
+    server = getFromNamespace("elaborator_server", "elaborator")
+  )
   on_ex_browser <- options()$browser
   on.exit(options(browser = on_ex_browser))
   if (!is.null(browser)) options(browser = browser)

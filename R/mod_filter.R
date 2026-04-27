@@ -45,6 +45,7 @@ mod_filter_ui <- function(id) {
 mod_filter_server <- function(id, r) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    ns_upload <- shiny::NS("upload_1")
     rs <- session$userData$root
     if (is.null(rs)) {
       rs <- session
@@ -78,8 +79,8 @@ mod_filter_server <- function(id, r) {
           for (i in seq_along(id_elab_m$myList)) {
             if (
               elab_data %>%
-                dplyr::pull(id_elab_m$myList2[i]) %>%
-                is.numeric()
+              dplyr::pull(id_elab_m$myList2[i]) %>%
+              is.numeric()
             ) {
               if (!is.null(input[[id_elab_m$myList[[i]]]])) {
                 data_filt <- data_filt[
@@ -158,7 +159,7 @@ mod_filter_server <- function(id, r) {
     data_without_missing_visits <- shiny::reactive({
       shiny::req(data_with_missing_flag())
       filtered_and_removed_visits <- data_with_missing_flag() %>%
-        dplyr::filter(visit_removed == FALSE)
+        dplyr::filter(.data$visit_removed == FALSE)
       filtered_and_removed_visits
     })
 
@@ -191,12 +192,12 @@ mod_filter_server <- function(id, r) {
       shiny::req(filtered_and_reduced_raw_data())
       tmp <- filtered_and_reduced_raw_data() %>%
         dplyr::group_by(
-          TRTP,
-          LBTESTCD
+          .data$TRTP,
+          .data$LBTESTCD
         ) %>%
-        dplyr::select(TRTP, LBTESTCD, SUBJIDN, AVISIT, LBORRES) %>%
-        tidyr::pivot_wider(names_from = AVISIT, values_from = LBORRES) %>%
-        dplyr::select(-SUBJIDN)
+        dplyr::select(.data$TRTP, .data$LBTESTCD, .data$SUBJIDN, .data$AVISIT, .data$LBORRES) %>%
+        tidyr::pivot_wider(names_from = .data$AVISIT, values_from = .data$LBORRES) %>%
+        dplyr::select(-.data$SUBJIDN)
       tmp <- tmp[, c(
         "TRTP",
         "LBTESTCD",
@@ -309,9 +310,9 @@ mod_filter_server <- function(id, r) {
       tmp <- data_with_selected_factor_levels() %>%
         dplyr::full_join(
           data_with_selected_factor_levels() %>%
-            dplyr::group_by(TRTP, LBTESTCD) %>%
+            dplyr::group_by(.data$TRTP, .data$LBTESTCD) %>%
             dplyr::summarise(
-              visits_non_missing = length(unique(AVISIT)),
+              visits_non_missing = length(unique(.data$AVISIT)),
               .groups = "keep"
             ),
           by = c("TRTP", "LBTESTCD")
@@ -320,23 +321,23 @@ mod_filter_server <- function(id, r) {
       tmp2 <- tmp %>%
         dplyr::right_join(
           tmp %>%
-            dplyr::group_by(SUBJIDN, LBTESTCD, TRTP) %>%
+            dplyr::group_by(.data$SUBJIDN, .data$LBTESTCD, .data$TRTP) %>%
             dplyr::summarise(
-              non_missing_values = sum(!is.na(LBORRES)),
+              non_missing_values = sum(!is.na(.data$LBORRES)),
               all_complete = unique(ifelse(
-                non_missing_values ==
-                  ifelse(is.null(visits_non_missing), 0, visits_non_missing),
+                .data$non_missing_values ==
+                  ifelse(is.null(.data$visits_non_missing), 0, .data$visits_non_missing),
                 TRUE,
                 FALSE
               )),
               .groups = "keep"
             ) %>%
             dplyr::ungroup() %>%
-            dplyr::select(SUBJIDN, LBTESTCD, TRTP, all_complete) %>%
+            dplyr::select(.data$SUBJIDN, .data$LBTESTCD, .data$TRTP, .data$all_complete) %>%
             dplyr::distinct(),
           by = c("SUBJIDN", "LBTESTCD", "TRTP")
         ) %>%
-        dplyr::filter(all_complete == TRUE)
+        dplyr::filter(.data$all_complete == TRUE)
       tmp2
     })
 
@@ -365,17 +366,14 @@ mod_filter_server <- function(id, r) {
       dat1 <- data_with_selected_factor_levels()
 
       percent <- r$globals$percent / 100
-      firstVisit <- dat1 %>%
-        dplyr::pull(AVISIT) %>%
-        levels() %>%
-        .[1]
+      firstVisit <- levels(dplyr::pull(dat1, "AVISIT"))[1]
       Yall <- dat1 %>%
-        tidyr::spread(AVISIT, LBORRES) %>%
-        dplyr::select(
-          c(LBTESTCD, LBORNRLO, LBORNRHI, SUBJIDN, TRTP, LBTESTCD, firstVisit)
-        )
+        tidyr::spread(!!rlang::sym("AVISIT"), !!rlang::sym("LBORRES")) %>%
+        dplyr::select(dplyr::all_of(
+          c("LBTESTCD", "LBORNRLO", "LBORNRHI", "SUBJIDN", "TRTP", firstVisit)
+        ))
       Summa <- Yall %>%
-        dplyr::group_by(LBTESTCD) %>%
+        dplyr::group_by(.data$LBTESTCD) %>%
         dplyr::summarise(
           lowquant = stats::quantile(
             !!rlang::sym(firstVisit),
@@ -389,16 +387,15 @@ mod_filter_server <- function(id, r) {
           ),
           max = max(!!rlang::sym(firstVisit), na.rm = TRUE),
           min = min(!!rlang::sym(firstVisit), na.rm = TRUE),
-          highref = mean(as.numeric(LBORNRHI), na.rm = TRUE),
-          lowref = mean(as.numeric(LBORNRLO), na.rm = TRUE)
+          highref = mean(as.numeric(.data$LBORNRHI), na.rm = TRUE),
+          lowref = mean(as.numeric(.data$LBORNRLO), na.rm = TRUE)
         ) %>%
         dplyr::mutate(
-          InQuRa = percent * (highquant - lowquant),
-          Range = percent * (max - min),
-          refRange = percent * (highref - lowref)
+          InQuRa = percent * (.data$highquant - .data$lowquant),
+          Range = percent * (.data$max - .data$min),
+          refRange = percent * (.data$highref - .data$lowref)
         ) %>%
-        dplyr::select(LBTESTCD, InQuRa, Range, refRange) %>%
-        dplyr::rename(variable = LBTESTCD)
+        dplyr::select(variable = .data$LBTESTCD, .data$InQuRa, .data$Range, .data$refRange)
       Summa
     })
 
@@ -500,7 +497,7 @@ mod_filter_server <- function(id, r) {
               if (
                 !is.numeric(
                   elab_data %>%
-                    dplyr::pull(pickerinput_filter[i])
+                  dplyr::pull(pickerinput_filter[i])
                 )
               ) {
                 shinyWidgets::pickerInput(
@@ -525,12 +522,12 @@ mod_filter_server <- function(id, r) {
               } else if (
                 is.numeric(
                   elab_data %>%
-                    dplyr::pull(pickerinput_filter[i])
+                  dplyr::pull(pickerinput_filter[i])
                 ) &&
-                  !is.integer(
-                    elab_data %>%
-                      dplyr::pull(pickerinput_filter[i])
-                  )
+                !is.integer(
+                  elab_data %>%
+                  dplyr::pull(pickerinput_filter[i])
+                )
               ) {
                 shiny::sliderInput(
                   inputId = id,
@@ -553,12 +550,12 @@ mod_filter_server <- function(id, r) {
               } else if (
                 is.numeric(
                   elab_data %>%
-                    dplyr::pull(pickerinput_filter[i])
+                  dplyr::pull(pickerinput_filter[i])
                 ) &&
-                  is.integer(
-                    elab_data %>%
-                      dplyr::pull(pickerinput_filter[i])
-                  )
+                is.integer(
+                  elab_data %>%
+                  dplyr::pull(pickerinput_filter[i])
+                )
               ) {
                 shiny::sliderInput(
                   inputId = id,
@@ -604,7 +601,7 @@ mod_filter_server <- function(id, r) {
       choices_sel_lab <- unique(filtered_raw_data()$LBTESTCD)
       shinyWidgets::updatePickerInput(
         rs,
-        inputId = "select.lab",
+        inputId = ns_upload("select.lab"),
         choices = choices_sel_lab,
         selected = choices_sel_lab
       )
@@ -613,7 +610,7 @@ mod_filter_server <- function(id, r) {
 
       shiny::updateSelectizeInput(
         rs,
-        inputId = "select.visit",
+        inputId = ns_upload("select.visit"),
         choices = choices_sel_visit,
         selected = choices_sel_visit
       )
@@ -629,7 +626,7 @@ mod_filter_server <- function(id, r) {
 
       shiny::updateSelectizeInput(
         rs,
-        inputId = "select.treatments",
+        inputId = ns_upload("select.treatments"),
         choices = choices_sel_treatments,
         selected = choices_sel_treatments
       )

@@ -10,19 +10,19 @@ mod_upload_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinyWidgets::prettyRadioButtons(
-      inputId = 'impswitch',
+      inputId = ns("impswitch"),
       label = 'Select file format',
       status = "warning",
       shape = 'round',
       animation = 'smooth',
       choices = c('*.RData file', '*.CSV file')
     ),
-    htmlOutput("err_message"),
-    shiny::uiOutput('impdata'),
+    shiny::htmlOutput(ns("err_message")),
+    shiny::uiOutput(ns("impdata")),
     shiny::conditionalPanel(
       condition = "output.flag == true",
       shiny::selectizeInput(
-        inputId = 'select.visit',
+        inputId = ns("select.visit"),
         label = 'Visits (exclude and rearrange)',
         choices = NULL,
         selected = NULL,
@@ -30,7 +30,7 @@ mod_upload_ui <- function(id) {
         options = list('plugins' = list('remove_button', 'drag_drop'))
       ),
       shiny::selectizeInput(
-        inputId = 'select.treatments',
+        inputId = ns("select.treatments"),
         label = 'Treatment groups (exclude and rearrange)',
         choices = NULL,
         selected = NULL,
@@ -40,7 +40,7 @@ mod_upload_ui <- function(id) {
         )
       ),
       shinyWidgets::pickerInput(
-        inputId = 'select.lab',
+        inputId = ns("select.lab"),
         label = 'Lab parameters',
         choices = NULL,
         selected = NULL,
@@ -66,7 +66,7 @@ mod_upload_ui <- function(id) {
         expanded = TRUE
       ),
       shiny::sliderInput(
-        inputId = 'select.toleratedPercentage',
+        inputId = ns("select.toleratedPercentage"),
         label = '',
         min = 25,
         max = 100,
@@ -86,9 +86,10 @@ mod_upload_server <- function(id, r) {
     ns <- session$ns
     #### Import data ####
     output$impdata <- shiny::renderUI({
+      shiny::req(input$impswitch)
       if (input$impswitch == '*.RData file') {
         shiny::fileInput(
-          inputId = 'file',
+          inputId = ns("file"),
           label = 'Choose RData file',
           multiple = FALSE,
           accept = '.RData'
@@ -97,7 +98,7 @@ mod_upload_server <- function(id, r) {
         shiny::tagList(
           shiny::fixedRow(
             shiny::fileInput(
-              inputId = 'csv_file',
+              inputId = ns("csv_file"),
               label = 'Choose CSV file',
               multiple = TRUE,
               accept = c(
@@ -107,7 +108,7 @@ mod_upload_server <- function(id, r) {
               )
             ),
             shinyWidgets::prettyRadioButtons(
-              inputId = 'sep',
+              inputId = ns("sep"),
               label = 'Select separator',
               inline = TRUE,
               choices = c('Comma' = ',', 'Semicolon' = ';', 'Tab' = '\t'),
@@ -116,7 +117,7 @@ mod_upload_server <- function(id, r) {
               selected = ','
             ),
             shinyWidgets::prettyRadioButtons(
-              inputId = 'quote',
+              inputId = ns("quote"),
               label = 'Select quote',
               inline = TRUE,
               choices = c(
@@ -129,7 +130,7 @@ mod_upload_server <- function(id, r) {
               animation = "smooth"
             ),
             shinyWidgets::prettyRadioButtons(
-              inputId = 'dec',
+              inputId = ns("dec"),
               label = 'Select decimal character',
               status = "warning",
               animation = "smooth",
@@ -149,7 +150,7 @@ mod_upload_server <- function(id, r) {
       if (!is.null(r$app_input())) {
         shinyWidgets::updatePrettyRadioButtons(
           session,
-          inputId = 'impswitch',
+          inputId = ns("impswitch"),
           choices = c('Loaded Data', '*.RData file', '*.CSV file')
         )
       }
@@ -186,10 +187,12 @@ mod_upload_server <- function(id, r) {
 
     raw_data_and_warnings <- shiny::reactive({
       input$impswitch
+      fpath <- if (!is.null(input$file)) input$file$datapath else NULL
+      csvp <- if (!is.null(input$csv_file)) input$csv_file$datapath else NULL
       tmp <- elaborator_load_and_check(
         data_switch = input$impswitch,
-        rdata_file_path = input$file$datapath,
-        csv_file_path = input$csv_file$datapath,
+        rdata_file_path = fpath,
+        csv_file_path = csvp,
         loaded_file = r$app_input(),
         separator = input$sep,
         quote = input$quote,
@@ -268,7 +271,7 @@ mod_upload_server <- function(id, r) {
       if (file.exists(here::here("data", "elaborator_demo.RData"))) {
         shinyWidgets::updatePrettyRadioButtons(
           session,
-          inputId = "impswitch",
+          inputId = ns("impswitch"),
           label = "Select file format",
           choices = c("*.RData file", "*.CSV file", "Demo data"),
           prettyOptions = list(status = "warning")

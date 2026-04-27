@@ -7,11 +7,8 @@
 #' @noRd
 #'
 mod_raw_data_ui <- function(id) {
-  ns <- shiny::NS(id)
   shiny::tagList(
-    DT::DTOutput(
-      'raw_data_table'
-    )
+    DT::DTOutput(shiny::NS("upload_1")("raw_data_table"))
   )
 }
 
