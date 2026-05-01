@@ -244,11 +244,11 @@ mod_filter_server <- function(id, r) {
         sort(as.character(unique(ds$LBTESTCD)))
       } else if (r$globals$orderinglab == "auto") {
         shiny::req(prepare_dist_matrix_for_clustering())
-        tmp2 %>%
+        ord <- tmp2 %>%
           elaborator_calculate_spearman_distance() %>%
           seriation::seriate(method = r$globals$clusterMethod) %>%
           seriation::get_order() %>%
-          rownames(tmp2)[.]
+          rownames(tmp2)[ord]
       } else if (r$globals$orderinglab == "manual") {
         r$globals$arrange.lab
       } else {
