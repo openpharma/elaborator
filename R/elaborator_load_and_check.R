@@ -53,8 +53,16 @@ elaborator_load_and_check <- function(
     if (!is.null(rdata_file_path) || !is.null(csv_file_path) || !is.null(loaded_file) || data_switch == "Demo data") {
       required_elaborator_vars <- c("SUBJIDN", "AVISIT", "TRTP", "LBTESTCD", "LBORRES", "LBORNRLO", "LBORNRHI")
       if (data_switch == 'Demo data') {
-        elaborator_data <- get(load(here::here("data", "elaborator_demo.RData")))
-         if (!all(required_elaborator_vars %in% names(elaborator_data))) {
+        demo_path <- elaborator_demo_rdata_path()
+        if (!nzchar(demo_path) || !file.exists(demo_path)) {
+          elaborator_data <- NULL
+          error_message <- paste0(
+            "Demo data is not bundled with this build of elaborator ",
+            "(missing inst/extdata/elaborator_demo.RData)."
+          )
+        } else {
+          elaborator_data <- get(load(demo_path))
+          if (!all(required_elaborator_vars %in% names(elaborator_data))) {
             error_message <- paste0(
               "The following required variable(s) <br> is/are missing: <br>",
               paste(required_elaborator_vars[which(!required_elaborator_vars %in% names(elaborator_data))], collapse = ", "),
@@ -63,6 +71,7 @@ elaborator_load_and_check <- function(
             elaborator_data <- NULL
           } else {
             error_message <- NULL
+          }
         }
       }
       if (data_switch == '*.RData file') {

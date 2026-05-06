@@ -150,7 +150,7 @@ mod_upload_server <- function(id, r) {
       if (!is.null(r$app_input())) {
         shinyWidgets::updatePrettyRadioButtons(
           session,
-          inputId = ns("impswitch"),
+          inputId = "impswitch",
           choices = c('Loaded Data', '*.RData file', '*.CSV file')
         )
       }
@@ -268,10 +268,10 @@ mod_upload_server <- function(id, r) {
     })
 
     shiny::observe({
-      if (file.exists(here::here("data", "elaborator_demo.RData"))) {
+      if (elaborator_demo_rdata_available()) {
         shinyWidgets::updatePrettyRadioButtons(
           session,
-          inputId = ns("impswitch"),
+          inputId = "impswitch",
           label = "Select file format",
           choices = c("*.RData file", "*.CSV file", "Demo data"),
           prettyOptions = list(status = "warning")
