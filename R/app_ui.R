@@ -6,14 +6,18 @@
 app_ui <- function(request) {
   shiny::tagList(
     golem_add_external_resources(),
-    shiny::fluidPage(
-      shinydashboard::dashboardPage(
+
+    shinydashboard::dashboardPage(
         title = "elaborator",
         shinydashboard::dashboardHeader(
-          title = shiny::img(
-            src = 'BAY_eLaborator_Logo-lang_Negativ.svg',
-            height = 24,
-            align = "left"
+          title = shiny::tags$a(
+            href = "#",
+            shiny::tags$img(
+              src = "www/BAY_eLaborator_Logo-lang_Negativ.svg",
+              alt = "elaborator",
+              height = 24,
+              style = "max-height: 24px; width: auto; vertical-align: left;"
+            )
           ),
           titleWidth = 250
         ),
@@ -157,7 +161,7 @@ app_ui <- function(request) {
             )
           )
         )
-      )
+      #)
     )
   )
 }
