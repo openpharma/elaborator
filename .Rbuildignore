@@ -11,3 +11,5 @@ $run_dev.*
 ^README\.Rmd$
 ^\.subversion$
 ^cran-comments\.md$
+^\.positai$
+^\.claude$
