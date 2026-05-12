@@ -67,6 +67,30 @@ app_server <- function(input, output, session) {
   output$ai <- shiny::reactive(r$start_ai$dat)
   shiny::outputOptions(output, "ai", suspendWhenHidden = FALSE)
 
+  # Dendrogram panels use output$ai; show when AI mode is on, user has clicked
+  # "Update selection!" once (go3 > 0), and method supports dendrogram (OLO/GW).
+  # Also react to clusterMethod / orderinglab so switching e.g. OLO→VAT updates
+  # visibility without relying only on another go3 click.
+  shiny::observeEvent(
+    list(input$go3, input$clusterMethod, input$orderinglab),
+    {
+      ol <- input$orderinglab
+      cm <- input$clusterMethod
+      go3 <- input$go3
+      if (
+        !is.null(ol) && ol == "auto" &&
+        !is.null(cm) &&
+        (startsWith(cm, "OLO") || startsWith(cm, "GW")) &&
+        !is.null(go3) && is.numeric(go3) && go3 > 0L
+      ) {
+        r$start_ai$dat <- TRUE
+      } else {
+        r$start_ai$dat <- FALSE
+      }
+    },
+    ignoreNULL = FALSE
+  )
+
   ns_box <- shiny::NS("boxplots_1")
   output$check <- shiny::reactive({
     trt <- input[[ns_box("trtcompar")]]

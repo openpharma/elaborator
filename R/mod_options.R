@@ -194,24 +194,9 @@ mod_options_server <- function(id, r) {
       }
     })
 
-    shiny::observeEvent(input$go3, {
-      if (shiny::isolate(input$orderinglab) == "auto") {
-        if (!is.null(shiny::isolate(input$clusterMethod))) {
-          if (
-            (startsWith(shiny::isolate(input$clusterMethod), "OLO") |
-              startsWith(shiny::isolate(input$clusterMethod), "GW"))
-          ) {
-            r$start_ai$dat <- TRUE
-          } else {
-            r$start_ai$dat <- FALSE
-          }
-        } else {
-          r$start_ai$dat <- FALSE
-        }
-      } else {
-        r$start_ai$dat <- FALSE
-      }
-    })
+    # r$start_ai$dat (output$ai, dendrogram conditionalPanel) is set in
+    # app_server from root input$go3 — see comment there. Options widgets use
+    # un-namespaced inputIds, so input$go3 is never visible inside this module.
   })
 }
 

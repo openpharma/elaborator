@@ -214,16 +214,14 @@ mod_trees_server <- function(id, r) {
     output$dendro_3 <- shiny::renderPlot({
       shiny::req(
         r$prepare_dist_matrix_for_clustering,
-        shiny::isolate(r$globals$clusterMethod)
+        r$globals$clusterMethod
       )
-      if (
-        (startsWith(shiny::isolate(r$globals$clusterMethod), "OLO") |
-         startsWith(shiny::isolate(r$globals$clusterMethod), "GW"))
-      ) {
+      cm <- r$globals$clusterMethod
+      if (startsWith(cm, "OLO") || startsWith(cm, "GW")) {
         tmp <- r$prepare_dist_matrix_for_clustering
         ser <- seriation::seriate(
           elaborator_calculate_spearman_distance(tmp),
-          method = shiny::isolate(r$globals$clusterMethod)
+          method = cm
         )
         asdendro <- stats::as.dendrogram(ser[[1]])
         dendro3 <- dendextend::assign_values_to_leaves_edgePar(dend = asdendro)
@@ -238,7 +236,7 @@ mod_trees_server <- function(id, r) {
           xpd = TRUE
         )
         on_ex <- graphics::par(no.readonly = TRUE)
-        on.exit(graphics::par(on_ex))
+        on.exit(suppressWarnings(graphics::par(on_ex)), add = TRUE)
         graphics::par(bg = r$theme$ColorBG)
         graphics::plot(dendro3, ylab = "Distance", horiz = FALSE)
       }
@@ -341,12 +339,12 @@ mod_trees_server <- function(id, r) {
 
             dat_filt$TRTP <- factor(dat_filt$TRTP)
 
-            cex <- shiny::isolate(input$cex.rvbp)
+            cex <- input$cex.rvbp
             crit <- input$criterion
 
             elaborator_plot_ref_pattern(
               data = dat_filt,
-              fontsize = 2,
+              fontsize = if (is.null(cex) || is.na(cex) || cex <= 0) 2 else cex,
               criterion = crit,
               sorting_vector = sorti[ceiling(
                 plot_coords$coords_css$x / r$globals$zoompx
@@ -434,12 +432,12 @@ mod_trees_server <- function(id, r) {
 
             dat <- subset(dat, !(dat$LBORNRLO == "" & dat$LBORNRHI == ""))
 
-            cex <- shiny::isolate(input$cex.rvbp)
+            cex <- input$cex.rvbp
             crit <- shiny::isolate(input$criterion)
 
             elaborator_plot_ref_pattern(
               data = dat,
-              fontsize = cex,
+              fontsize = if (is.null(cex) || is.na(cex)) 0 else cex,
               criterion = crit,
               sorting_vector = levels(dat$LBTESTCD),
               abnormal_value_factor = shiny::isolate(input$abnormal_values_factor)

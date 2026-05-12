@@ -406,16 +406,14 @@ mod_boxplots_server <- function(id, r) {
     output$dendro_1 <- shiny::renderPlot({
       shiny::req(
         r$prepare_dist_matrix_for_clustering,
-        shiny::isolate(r$globals$clusterMethod)
+        r$globals$clusterMethod
       )
-      if (
-        (startsWith(shiny::isolate(r$globals$clusterMethod), "OLO") |
-         startsWith(shiny::isolate(r$globals$clusterMethod), "GW"))
-      ) {
+      cm <- r$globals$clusterMethod
+      if (startsWith(cm, "OLO") || startsWith(cm, "GW")) {
         tmp <- r$prepare_dist_matrix_for_clustering
         ser <- seriation::seriate(
           elaborator_calculate_spearman_distance(tmp),
-          method = shiny::isolate(r$globals$clusterMethod)
+          method = cm
         )
         asdendro <- stats::as.dendrogram(ser[[1]])
         dendro <- dendextend::assign_values_to_leaves_edgePar(dend = asdendro)
@@ -429,7 +427,7 @@ mod_boxplots_server <- function(id, r) {
           xpd = TRUE
         )
         on_ex <- graphics::par(no.readonly = TRUE)
-        on.exit(graphics::par(on_ex))
+        on.exit(suppressWarnings(graphics::par(on_ex)), add = TRUE)
         graphics::par(bg = r$theme$ColorBG)
         graphics::plot(dendro, ylab = "Distance", horiz = FALSE)
       }

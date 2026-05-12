@@ -189,7 +189,7 @@ mod_filter_server <- function(id, r) {
 
     #### preprocess lines for quantitative trends####
     quant_plot_data_lines <- shiny::reactive({
-      shiny::req(filtered_and_reduced_raw_data())
+      shiny::req(filtered_and_reduced_raw_data(), data_with_selected_factor_levels())
       tmp <- filtered_and_reduced_raw_data() %>%
         dplyr::group_by(
           .data$TRTP,
@@ -198,11 +198,12 @@ mod_filter_server <- function(id, r) {
         dplyr::select(.data$TRTP, .data$LBTESTCD, .data$SUBJIDN, .data$AVISIT, .data$LBORRES) %>%
         tidyr::pivot_wider(names_from = .data$AVISIT, values_from = .data$LBORRES) %>%
         dplyr::select(-.data$SUBJIDN)
-      tmp <- tmp[, c(
-        "TRTP",
-        "LBTESTCD",
-        levels(data_with_selected_factor_levels()$AVISIT)
-      )]
+      # Column names come from actual AVISIT values in the wide table; factor
+      # levels can lag or differ after a new upload — only subset columns that exist.
+      lv <- levels(data_with_selected_factor_levels()$AVISIT)
+      visit_in_tmp <- setdiff(names(tmp), c("TRTP", "LBTESTCD"))
+      ordered_visits <- c(intersect(lv, visit_in_tmp), setdiff(visit_in_tmp, lv))
+      tmp <- tmp[, c("TRTP", "LBTESTCD", ordered_visits), drop = FALSE]
       tmp
     })
 
@@ -247,8 +248,8 @@ mod_filter_server <- function(id, r) {
         ord <- tmp2 %>%
           elaborator_calculate_spearman_distance() %>%
           seriation::seriate(method = r$globals$clusterMethod) %>%
-          seriation::get_order() %>%
-          rownames(tmp2)[ord]
+          seriation::get_order()
+        rownames(tmp2)[ord]
       } else if (r$globals$orderinglab == "manual") {
         r$globals$arrange.lab
       } else {
@@ -278,7 +279,9 @@ mod_filter_server <- function(id, r) {
           lab_levels <- lab_levels[lab_levels %in% r$globals$select.lab]
           tmp$LBTESTCD <- factor(tmp$LBTESTCD, levels = lab_levels)
         } else if (shiny::isolate(r$globals$orderinglab) == "auto") {
-          lab_levels <- shiny::isolate(lab_parameter_order_by_clustering())
+          # Do not isolate(): we need a reactive dependency so this runs *after*
+          # lab_parameter_order_by_clustering() updates on the same go3 click.
+          lab_levels <- lab_parameter_order_by_clustering()
           lab_levels <- c(
             lab_levels,
             as.character(unique(tmp$LBTESTCD)[which(
@@ -323,13 +326,13 @@ mod_filter_server <- function(id, r) {
           tmp %>%
             dplyr::group_by(.data$SUBJIDN, .data$LBTESTCD, .data$TRTP) %>%
             dplyr::summarise(
+              # visits_non_missing is constant per (SUBJIDN, LBTESTCD, TRTP) in
+              # theory, but duplicate join rows can repeat it — collapse to scalar.
+              visits_expected = dplyr::first(
+                dplyr::coalesce(as.numeric(.data$visits_non_missing), 0)
+              ),
               non_missing_values = sum(!is.na(.data$LBORRES)),
-              all_complete = unique(ifelse(
-                .data$non_missing_values ==
-                  ifelse(is.null(.data$visits_non_missing), 0, .data$visits_non_missing),
-                TRUE,
-                FALSE
-              )),
+              all_complete = .data$non_missing_values == .data$visits_expected,
               .groups = "keep"
             ) %>%
             dplyr::ungroup() %>%
@@ -366,12 +369,21 @@ mod_filter_server <- function(id, r) {
       dat1 <- data_with_selected_factor_levels()
 
       percent <- r$globals$percent / 100
-      firstVisit <- levels(dplyr::pull(dat1, "AVISIT"))[1]
+      lv <- levels(dplyr::pull(dat1, "AVISIT"))
       Yall <- dat1 %>%
-        tidyr::spread(!!rlang::sym("AVISIT"), !!rlang::sym("LBORRES")) %>%
-        dplyr::select(dplyr::all_of(
-          c("LBTESTCD", "LBORNRLO", "LBORNRHI", "SUBJIDN", "TRTP", firstVisit)
-        ))
+        tidyr::spread(!!rlang::sym("AVISIT"), !!rlang::sym("LBORRES"))
+      # After spread, columns are named by values present in data; factor levels
+      # may not all exist as columns (e.g. after switching datasets).
+      firstVisit <- lv[lv %in% names(Yall)][1L]
+      if (is.na(firstVisit)) {
+        meta <- c("LBTESTCD", "LBORNRLO", "LBORNRHI", "SUBJIDN", "TRTP")
+        cand <- setdiff(names(Yall), meta)
+        shiny::req(length(cand) > 0L)
+        firstVisit <- cand[[1L]]
+      }
+      need_cols <- c("LBTESTCD", "LBORNRLO", "LBORNRHI", "SUBJIDN", "TRTP", firstVisit)
+      Yall <- Yall %>%
+        dplyr::select(dplyr::any_of(need_cols))
       Summa <- Yall %>%
         dplyr::group_by(.data$LBTESTCD) %>%
         dplyr::summarise(

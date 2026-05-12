@@ -226,18 +226,14 @@ mod_qualitative_server <- function(id, r) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     output$dendro_2 <- shiny::renderPlot({
-      if (
-        (startsWith(shiny::isolate(r$globals$clusterMethod), "OLO") |
-         startsWith(shiny::isolate(r$globals$clusterMethod), "GW"))
-      ) {
-        shiny::req(
-          r$prepare_dist_matrix_for_clustering,
-          shiny::isolate(r$globals$clusterMethod)
-        )
+      shiny::req(r$globals$clusterMethod)
+      cm <- r$globals$clusterMethod
+      if (startsWith(cm, "OLO") || startsWith(cm, "GW")) {
+        shiny::req(r$prepare_dist_matrix_for_clustering)
         tmp <- r$prepare_dist_matrix_for_clustering
         ser <- seriation::seriate(
           elaborator_calculate_spearman_distance(tmp),
-          method = shiny::isolate(r$globals$clusterMethod)
+          method = cm
         )
         asdendro <- stats::as.dendrogram(ser[[1]])
         dendro2 <- dendextend::assign_values_to_leaves_edgePar(dend = asdendro)
@@ -252,7 +248,7 @@ mod_qualitative_server <- function(id, r) {
           xpd = TRUE
         )
         on_ex <- graphics::par(no.readonly = TRUE)
-        on.exit(graphics::par(on_ex))
+        on.exit(suppressWarnings(graphics::par(on_ex)), add = TRUE)
         graphics::par(bg = r$theme$ColorBG)
         graphics::plot(dendro2, ylab = "Distance", horiz = FALSE)
       }
