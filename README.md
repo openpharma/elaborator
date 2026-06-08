@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# e**lab**orator <a href='https://github.com/openpharma/elaborator'><img src='inst/www/eLaborator_logo.png' align="right" height="139" /></a>
+# e**lab**orator <a href='https://github.com/openpharma/elaborator'><img src='inst/app/www/eLaborator_logo.png' align="right" height="139" /></a>
 
 <!-- badges: start -->
 
@@ -55,7 +55,7 @@ between the End of Treatment-Visit and the Follow-Up 3-Visit.
 <a name="fig1"></a>
 <figure>
 
-<img src='inst/www/Fig1.png' alt='Graphic cannot be displayed' width='368' height='300'>
+<img src='inst/app/www/Fig1.png' alt='Graphic cannot be displayed' width='368' height='300'>
 <figcaption>
 
 <b>Figure 1</b>: <i>Example plot for quantitative trends analysis. The
@@ -108,7 +108,7 @@ increasing number of cells.
 <a name="fig2"></a>
 <figure>
 
-<img src='inst/www/Fig2.png' alt='Graphic cannot be displayed' width='540' height='350'>
+<img src='inst/app/www/Fig2.png' alt='Graphic cannot be displayed' width='540' height='350'>
 <figcaption>
 
 <b>Figure 2</b>: <i>Example plot for qualitative trends analysis (left)
@@ -155,7 +155,7 @@ shown might be smaller than for the other two analyses types.
 <a name="fig3"></a>
 <figure>
 
-<img src='inst/www/Fig3.png' alt='Graphic cannot be displayed' width='411' height='400'>
+<img src='inst/app/www/Fig3.png' alt='Graphic cannot be displayed' width='411' height='400'>
 <figcaption>
 
 <b>Figure 3</b>: <i>Example plot for reference-value based pattern
@@ -179,25 +179,6 @@ following R code. You can install the development version from
 # If the package devtools is not yet installed on your system, you may remove the '#' from the next line to install it first.
 # install.packages("devtools")
 devtools::install_github("openpharma/elaborator")
-#> Warning: `install_github()` was deprecated in devtools 2.5.0.
-#> ℹ Please use pak::pak("user/repo") instead.
-#> This warning is displayed once per session.
-#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-#> generated.
-#> Downloading GitHub repo openpharma/elaborator@HEAD
-#> cpp11 (0.5.3 -> 0.5.4) [CRAN]
-#> Installing 1 packages: cpp11
-#> Installing package into '/tmp/RtmpATbkPC/temp_libpath120bdfab641'
-#> (as 'lib' is unspecified)
-#> ── R CMD build ─────────────────────────────────────────────────────────────────
-#> * checking for file ‘/tmp/RtmpIZkI3N/remotes991f31c9c4f7/openpharma-elaborator-8e03dd8/DESCRIPTION’ ... OK
-#> * preparing ‘elaborator’:
-#> * checking DESCRIPTION meta-information ... OK
-#> * checking for LF line-endings in source and make files and shell scripts
-#> * checking for empty or unneeded directories
-#> * building ‘elaborator_1.3.6.tar.gz’
-#> Installing package into '/tmp/RtmpATbkPC/temp_libpath120bdfab641'
-#> (as 'lib' is unspecified)
 ```
 
 ## Run
@@ -286,7 +267,7 @@ This data set can then be loaded within the e**lab**orator using the
 “Data Upload” functionality in the main menu on the left side of the
 application:
 
-<img src='inst/www/data_upload.png'/>
+<img src='inst/app/www/data_upload.png'/>
 
 Please refer to the publication mentioned above and the “Data Manual”
 and “Information” tab in the main menu within the application for
@@ -300,96 +281,5 @@ This README has been compiled on the
 
 ``` r
 Sys.time()
-#> [1] "2026-04-16 14:48:47 UTC"
-```
-
-Here are the tests results and package coverage:
-
-``` r
-devtools::check(quiet = TRUE)
-#> ℹ Loading elaborator
-#> Welcome to the elaborator App!
-#> 
-#> Writing 'elaborator-package.Rd'
-#> ── R CMD check results ─────────────────────────────────── elaborator 1.3.6 ────
-#> Duration: 1m 40.8s
-#> 
-#> ❯ checking tests ...
-#>   See below...
-#> 
-#> ❯ checking for future file timestamps ... NOTE
-#>   unable to verify current time
-#> 
-#> ❯ checking top-level files ... NOTE
-#>   File
-#>     LICENSE
-#>   is not mentioned in the DESCRIPTION file.
-#>   Non-standard file/directory found at top level:
-#>     ‘cran-comments.md’
-#> 
-#> ── Test failures ───────────────────────────────────────────────── testthat ────
-#> 
-#> > # This file is part of the standard setup for testthat.
-#> > # It is recommended that you do not modify it.
-#> > #
-#> > # Where should you do additional test configuration?
-#> > # Learn more about the roles of various files in:
-#> > # * https://r-pkgs.org/testing-design.html#sec-tests-files-overview
-#> > # * https://testthat.r-lib.org/articles/special-files.html
-#> > 
-#> > library(testthat)
-#> > library(elaborator)
-#> Welcome to the elaborator App!
-#> > 
-#> > test_check("elaborator")
-#> Saving _problems/test-golem_utils_ui-99.R
-#> Saving _problems/test-golem_utils_ui-105.R
-#> Loading required package: shiny
-#> [ FAIL 2 | WARN 0 | SKIP 1 | PASS 83 ]
-#> 
-#> ══ Skipped tests (1) ═══════════════════════════════════════════════════════════
-#> • rlang_is_interactive() is not TRUE (1): 'test-golem-recommended.R:72:5'
-#> 
-#> ══ Failed tests ════════════════════════════════════════════════════════════════
-#> ── Failure ('test-golem_utils_ui.R:96:3'): Test undisplay works ────────────────
-#> Expected `as.character(b)` to equal "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\">go</button>".
-#> Differences:
-#> actual vs expected
-#> - "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\"><span class=\"action-label\">go</span></button>"
-#> + "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\">go</button>"
-#> 
-#> ── Failure ('test-golem_utils_ui.R:102:3'): Test undisplay works ───────────────
-#> Expected `as.character(b_undisplay)` to equal "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\" style=\"display: none;\">go</button>".
-#> Differences:
-#> actual vs expected
-#> - "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\" style=\"display: none;\"><span class=\"action-label\">go</span></button>"
-#> + "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\" style=\"display: none;\">go</button>"
-#> 
-#> 
-#> [ FAIL 2 | WARN 0 | SKIP 1 | PASS 83 ]
-#> Error:
-#> ! Test failures.
-#> Execution halted
-#> 
-#> 1 error ✖ | 0 warnings ✔ | 2 notes ✖
-#> Error:
-#> ! R CMD check found ERRORs
-```
-
-``` r
-covr::package_coverage()
-#> Error:
-#> ! Failure in `/tmp/RtmpIZkI3N/R_LIBS991f67493fe9/elaborator/elaborator-tests/testthat.Rout.fail`
-#> ──────────
-#> Expected `as.character(b_undisplay)` to equal "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\" style=\"display: none;\">go</button>".
-#> Differences:
-#> actual vs expected
-#> - "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\" style=\"display: none;\"><span class=\"action-label\">go</span></button>"
-#> + "<button id=\"go_filter\" type=\"button\" class=\"btn btn-default action-button\" style=\"display: none;\">go</button>"
-#> 
-#> 
-#> [ FAIL 2 | WARN 0 | SKIP 1 | PASS 83 ]
-#> Error:
-#> ! Test failures.
-#> Execution halted
+#> [1] "2026-06-08 16:14:43 UTC"
 ```
