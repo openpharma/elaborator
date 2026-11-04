@@ -52,27 +52,27 @@ elaborator_server <- function(input, output, session) {
   ColorFont <- "#3c3c3b"
 
   colChoice <- list(
-    'sequential orange' = list('col' = brewer.pal(9, 'Oranges'), 'gradient' = TRUE),
-    'sequential blue'   = list('col' = brewer.pal(9, 'Blues'),   'gradient' = TRUE),
-    'sequential green'  = list('col' = brewer.pal(9, 'Greens'),  'gradient' = TRUE),
-    'sequential grey'   = list('col' = brewer.pal(9, 'Greys'),   'gradient' = TRUE),
-    'sequential purple' = list('col' = brewer.pal(9, 'Purples'), 'gradient' = TRUE),
-    'sequential red'    = list('col' = brewer.pal(9, 'Reds'),    'gradient' = TRUE),
+    'sequential orange' = list('col' = RColorBrewer::brewer.pal(9, 'Oranges'), 'gradient' = TRUE),
+    'sequential blue'   = list('col' = RColorBrewer::brewer.pal(9, 'Blues'),   'gradient' = TRUE),
+    'sequential green'  = list('col' = RColorBrewer::brewer.pal(9, 'Greens'),  'gradient' = TRUE),
+    'sequential grey'   = list('col' = RColorBrewer::brewer.pal(9, 'Greys'),   'gradient' = TRUE),
+    'sequential purple' = list('col' = RColorBrewer::brewer.pal(9, 'Purples'), 'gradient' = TRUE),
+    'sequential red'    = list('col' = RColorBrewer::brewer.pal(9, 'Reds'),    'gradient' = TRUE),
 
-    'sequential blue - green'  = list('col' = brewer.pal(9, 'BuGn'), 'gradient' = TRUE),
-    'sequential blue - purple' = list('col' = brewer.pal(9, 'BuPu'), 'gradient' = TRUE),
-    'sequential green - blue'  = list('col' = brewer.pal(9, 'GnBu'), 'gradient' = TRUE),
-    'sequential orange - red'  = list('col' = brewer.pal(9, 'OrRd'), 'gradient' = TRUE),
-    'sequential purple - blue' = list('col' = brewer.pal(9, 'PuBu'), 'gradient' = TRUE),
+    'sequential blue - green'  = list('col' = RColorBrewer::brewer.pal(9, 'BuGn'), 'gradient' = TRUE),
+    'sequential blue - purple' = list('col' = RColorBrewer::brewer.pal(9, 'BuPu'), 'gradient' = TRUE),
+    'sequential green - blue'  = list('col' = RColorBrewer::brewer.pal(9, 'GnBu'), 'gradient' = TRUE),
+    'sequential orange - red'  = list('col' = RColorBrewer::brewer.pal(9, 'OrRd'), 'gradient' = TRUE),
+    'sequential purple - blue' = list('col' = RColorBrewer::brewer.pal(9, 'PuBu'), 'gradient' = TRUE),
 
-    'sequential purple - blue - green'= list('col' = brewer.pal(9, 'PuBuGn'),'gradient' = TRUE),
-    'sequential purple - red'         = list('col' = brewer.pal(9, 'PuRd'),  'gradient' = TRUE),
-    'sequential red - purple'         = list('col' = brewer.pal(9, 'RdPu'),  'gradient' = TRUE),
+    'sequential purple - blue - green'= list('col' = RColorBrewer::brewer.pal(9, 'PuBuGn'),'gradient' = TRUE),
+    'sequential purple - red'         = list('col' = RColorBrewer::brewer.pal(9, 'PuRd'),  'gradient' = TRUE),
+    'sequential red - purple'         = list('col' = RColorBrewer::brewer.pal(9, 'RdPu'),  'gradient' = TRUE),
 
-    'sequential yellow - green'         = list('col' = brewer.pal(9, 'YlGn'),  'gradient' = TRUE),
-    'sequential yellow - green - blue'  = list('col' = brewer.pal(9, 'YlGnBu'),'gradient' = TRUE),
-    'sequential yellow - orange - brown'= list('col' = brewer.pal(9, 'YlOrBr'),'gradient' = TRUE),
-    'sequential yellow - orange - red'  = list('col' = brewer.pal(9, 'YlOrRd'),'gradient' = TRUE)
+    'sequential yellow - green'         = list('col' = RColorBrewer::brewer.pal(9, 'YlGn'),  'gradient' = TRUE),
+    'sequential yellow - green - blue'  = list('col' = RColorBrewer::brewer.pal(9, 'YlGnBu'),'gradient' = TRUE),
+    'sequential yellow - orange - brown'= list('col' = RColorBrewer::brewer.pal(9, 'YlOrBr'),'gradient' = TRUE),
+    'sequential yellow - orange - red'  = list('col' = RColorBrewer::brewer.pal(9, 'YlOrRd'),'gradient' = TRUE)
   )
 
   #### Import data ####
