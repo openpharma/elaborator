@@ -1,0 +1,15 @@
+# Shiny entrypoint loads the installed package; do not bundle package source as app support files.
+/R/
+/man/
+/data/
+/data-raw/
+/dev/
+/tests/
+/vignettes/
+/cran-comments.md
+/NEWS.md
+/LICENSE
+/.git/
+/.github/
+/elaborator.Rproj
+/.Rproj.user/

@@ -3582,10 +3582,10 @@
       "checksum": "8c05cc6da666da4efbaf1bb0204bca1f"
     },
     ".Rprofile": {
-      "checksum": "bab3e82b66246f8e70293019fac361c5"
+      "checksum": "f81b91099c84daefde9e1b4dcf1aa134"
     },
     "app.R": {
-      "checksum": "ceb86f414195e8cd7c4ca5a8296fee51"
+      "checksum": "4478c166db3ec25232af86e793747059"
     },
     "cran-comments.md": {
       "checksum": "9a6baa387f974988cd0140393723adcd"
@@ -3597,7 +3597,7 @@
       "checksum": "184f35898dc1c779e7947e92fdb6eb37"
     },
     "dev/setup_deployment.R": {
-      "checksum": "d7ccd250f255d31fddc83c781a792026"
+      "checksum": "239f7f63d57964ca249d8aca66d79cb3"
     },
     "inst/www/BAY_eLaborator_Logo-lang_Negativ.svg": {
       "checksum": "eded083d39d649d06cd2861cb57fb008"
@@ -3717,7 +3717,7 @@
       "checksum": "041d52a1f292306498b703f8b51f39e6"
     },
     "NAMESPACE": {
-      "checksum": "6967c70290d80504e997d51688e2a5ce"
+      "checksum": "f14ec8fa25b555b08a0d1293c4710dde"
     },
     "NEWS.md": {
       "checksum": "82ff07abe5e5b69425e9cc681a00327e"
@@ -3804,22 +3804,22 @@
       "checksum": "33f318d2f0c04a938ec6715714b65b35"
     },
     "R/elaborator_server.R": {
-      "checksum": "7739f6fae544e575388a3f7055f271b0"
+      "checksum": "aaa3ca6aa82bde3639229ef72aeb9fe6"
     },
     "R/elaborator_transform_transparent.R": {
       "checksum": "5229026cee870da52faba7d999303d48"
     },
     "R/elaborator_ui.R": {
-      "checksum": "49227191d0933042171a2b41f80cb879"
+      "checksum": "fc48c88f7a3b03d764f8fd90415abfca"
     },
     "R/launch_elaborator.R": {
-      "checksum": "cb151ab3e93620323dd29bf57a004d21"
+      "checksum": "ff27dd0805b862c0ab664e9f78770bbf"
     },
     "R/merged_data.R": {
       "checksum": "f1b7923d5785dd034a346089036de0c5"
     },
     "R/zzz.R": {
-      "checksum": "6a86f69cdc5cbf9af2ec19aac6850bf5"
+      "checksum": "f288432dd60e06d64a66c7000769f8d8"
     },
     "README.md": {
       "checksum": "d6d9c934924d6ffd7e3d2a6b01776306"

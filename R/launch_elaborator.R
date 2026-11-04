@@ -70,27 +70,37 @@
 #' @importFrom graphics abline arrows axis boxplot grconvertX grconvertY lines mtext par plot points rect text
 #' @importFrom stats as.dendrogram as.dist binom.test cor median na.omit quantile runif t.test
 #'
-#' @return A shiny app
+#' @describeIn launch_elaborator Build the Shiny application object (for Posit Connect and testing).
+#' @export
+#'
+#' @return A \code{shiny.app.obj}
+#'
+#' @keywords elaborator
+elaborator_app <- function(elaborator_data = NULL) {
+  apppars <- list(elaborator_data = elaborator_data)
+  server_env <- environment(elaborator_server)
+  # server_env$apppars <- apppars
 
+  register_elaborator_static_assets()
+  shiny::shinyApp(ui = elaborator_ui, server = elaborator_server)
+}
+
+#' @rdname launch_elaborator
+#' @export
+#'
+#' @return Invisibly, the Shiny application object when run locally; primarily
+#'   invoked for side effect (browser).
 launch_elaborator <- function(
     elaborator_data = NULL,
     host = "0.0.0.0",
     port = NULL,
     browser = NULL
-  ){
-
-  apppars <- list(
-    elaborator_data = elaborator_data
-  )
-  server_env <- environment(elaborator_server)
-  # server_env$apppars <- apppars
-
-  elaborator_app <- shiny::shinyApp(ui = elaborator_ui, server = elaborator_server)
+  ) {
+  app <- elaborator_app(elaborator_data = elaborator_data)
   on_ex_browser <- options()$browser
   on.exit(options(browser = on_ex_browser))
-  if (!is.null(browser)) options(browser = browser)
-
-
-
-  shiny::runApp(elaborator_app, host = host, port = port)
+  if (!is.null(browser)) {
+    options(browser = browser)
+  }
+  shiny::runApp(app, host = host, port = port)
 }
