@@ -12,6 +12,6 @@ Depends: R (>= 3.5.0), seriation
 License: GPL-3
 URL: https://github.com/openpharma/elaborator
 Encoding: UTF-8
-Imports: shiny, dplyr, purrr, DT, here, tidyselect, rlang, tidyr, forcats, RColorBrewer, bsplus, dendextend, haven, reshape2, shape, shinyWidgets, shinydashboard
+Imports: shiny, dplyr, purrr, DT, here, tidyselect, rlang, tidyr, forcats, RColorBrewer, bsplus, dendextend, haven, reshape2, shape, shinyWidgets, shinydashboard, pkgload
 LazyData: true
-RoxygenNote: 7.2.3
+Config/roxygen2/version: 8.1.1
